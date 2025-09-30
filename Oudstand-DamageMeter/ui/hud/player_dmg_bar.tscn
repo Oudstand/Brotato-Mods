@@ -11,14 +11,14 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxEmpty" id=2]
-
 [sub_resource type="StyleBoxFlat" id=3]
-bg_color = Color(0.2, 0.45, 0.25, 1)
+bg_color = Color( 0.2, 0.45, 0.25, 1 )
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxEmpty" id=2]
 
 [node name="PlayerDamageContainer" type="VBoxContainer"]
 margin_right = 150.0
@@ -33,22 +33,21 @@ script = ExtResource( 3 )
 [node name="SourceListBackground" type="Control" parent="."]
 margin_right = 150.0
 margin_bottom = 124.0
-rect_min_size = Vector2( 0, 124 )
+rect_min_size = Vector2( 150, 0 )
 size_flags_vertical = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="SourceListBackground"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 custom_constants/margin_right = 8
-custom_constants/margin_top = 4
+custom_constants/margin_top = 0
 custom_constants/margin_left = 8
-custom_constants/margin_bottom = 4
+custom_constants/margin_bottom = 0
 
 [node name="SourceList" type="VBoxContainer" parent="SourceListBackground/MarginContainer"]
 margin_left = 8.0
-margin_top = 4.0
 margin_right = 142.0
-margin_bottom = 120.0
+margin_bottom = 124.0
 custom_constants/separation = 2
 
 [node name="TotalDamageBar" type="Control" parent="."]
@@ -69,38 +68,30 @@ margin_left = 4.0
 margin_top = 4.0
 margin_right = -4.0
 margin_bottom = -4.0
-custom_styles/bg = SubResource( 2 )
 custom_styles/fg = SubResource( 3 )
+custom_styles/bg = SubResource( 2 )
 value = 50.0
 percent_visible = false
 
-[node name="Content" type="MarginContainer" parent="TotalDamageBar"]
+[node name="HBoxContainer" type="HBoxContainer" parent="TotalDamageBar"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-custom_constants/margin_right = 8
-custom_constants/margin_top = 4
-custom_constants/margin_left = 8
-custom_constants/margin_bottom = 4
-
-[node name="HBoxContainer" type="HBoxContainer" parent="TotalDamageBar/Content"]
 margin_left = 8.0
-margin_top = 4.0
-margin_right = 142.0
-margin_bottom = 36.0
+margin_right = -8.0
 custom_constants/separation = 8
 
-[node name="CharacterIcon" type="TextureRect" parent="TotalDamageBar/Content/HBoxContainer"]
+[node name="CharacterIcon" type="TextureRect" parent="TotalDamageBar/HBoxContainer"]
 margin_right = 32.0
-margin_bottom = 32.0
+margin_bottom = 40.0
 rect_min_size = Vector2( 32, 32 )
 expand = true
 stretch_mode = 6
 
-[node name="DamageLabel" type="Label" parent="TotalDamageBar/Content/HBoxContainer"]
+[node name="DamageLabel" type="Label" parent="TotalDamageBar/HBoxContainer"]
 margin_left = 40.0
-margin_top = 3.0
+margin_top = 13.0
 margin_right = 134.0
-margin_bottom = 28.0
+margin_bottom = 27.0
 size_flags_horizontal = 3
 size_flags_vertical = 6
 custom_colors/font_color = Color( 1, 1, 1, 1 )
