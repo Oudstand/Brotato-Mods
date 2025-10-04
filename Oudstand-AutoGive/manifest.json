@@ -1,0 +1,18 @@
+{
+    "name": "AutoGive",
+    "namespace": "Oudstand",
+    "version_number": "1.0.0",
+    "description": "Gibt automatisch Test-Items beim Start eines Runs",
+    "website_url": "",
+    "dependencies": [],
+    "extra": {
+        "godot": {
+            "incompatibilities": [],
+            "authors": ["Test"],
+            "tags": ["testing", "debug"],
+            "compatible_mod_loader_version": ["6.2.0"],
+            "compatible_game_version": ["1.1.12.0"],
+            "config_schema": {}
+        }
+    }
+}
