@@ -4,6 +4,7 @@ const SPACING_LEFT: int = 8
 const SPACING_RIGHT: int = 12
 const ICON_SIZE_NORMAL: int = 32
 const ICON_SIZE_COMPACT: int = 24
+const LABEL_WIDTH_RIGHT: int = 250
 
 onready var content: HBoxContainer = $Content
 onready var icon_bg: Panel = $Content/IconBackground
@@ -65,7 +66,7 @@ func set_mod_alignment(is_right: bool) -> void:
 	content.anchor_right = content.anchor_left
 	
 	if is_right:
-		label.rect_min_size.x = 80 
+		label.rect_min_size.x = LABEL_WIDTH_RIGHT
 		label.align = Label.ALIGN_RIGHT 
 		content.move_child(label, 0)
 		content.move_child(icon_bg, 1)
