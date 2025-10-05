@@ -103,6 +103,20 @@ func _get_spawned_items_for_weapon(weapon: Object) -> Array:
 	
 	return spawned
 
+func _get_spawned_items_for_item(item: Object) -> Array:
+	var spawned = []
+	
+	if not is_instance_valid(item) or not "my_id" in item:
+		return spawned
+	
+	# Taschenfabrik spawnt normale Geschütze
+	if item.my_id == "item_pocket_factory":
+		var turret = ItemService.get_item_from_id("item_turret")
+		if is_instance_valid(turret):
+			spawned.append(turret)
+	
+	return spawned
+
 func _is_damage_tracking_item(source: Object) -> bool:
 	"""Prüft ob ein Item Schaden trackt"""
 	if not is_instance_valid(source):
@@ -196,6 +210,11 @@ func _collect_grouped_sources(player_index: int) -> Array:
 		
 		var dmg = _get_source_damage(item, player_index)
 		_add_to_group(groups, item, dmg)
+		
+		# Spawned items von Items (z.B. Taschenfabrik)
+		for spawned in _get_spawned_items_for_item(item):
+			var spawned_dmg = _get_source_damage(spawned, player_index)
+			_add_to_group(groups, spawned, spawned_dmg)
 	
 	var result = []
 	for group in groups.values():
