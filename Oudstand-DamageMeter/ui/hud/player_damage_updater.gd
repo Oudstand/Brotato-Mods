@@ -1,7 +1,17 @@
 extends "res://ui/hud/ui_wave_timer.gd"
 
-const UPDATE_INTERVAL: float = 0.1
-const TOP_K: int = 6
+# === SETTINGS (You can adjust values here) ===
+const TOP_K: int = 6                    # Number of top damage sources to display (1-12)
+const SHOW_ITEM_COUNT: bool = true      # Show count for grouped items (e.g. "x5")
+const SHOW_DPS: bool = false            # Show damage per second
+const BAR_OPACITY: float = 1.0          # Transparency (0.3-1.0)
+const UPDATE_INTERVAL: float = 0.1      # Update frequency in seconds (0.05-0.5)
+const ANIMATION_SPEED: float = 6.0      # Bar animation speed (1.0-20.0)
+const MIN_DAMAGE_FILTER: int = 1        # Minimum damage to display (0 = all)
+const SHOW_PERCENTAGE: bool = true      # Show percentage values
+const COMPACT_MODE: bool = false        # Smaller icons and text
+# ===================================================
+
 const MOD_NAME: String = "DamageMeter"
 
 onready var _hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
@@ -10,13 +20,14 @@ var update_timer: Timer = null
 var active_displays: Array = []
 var all_display_containers: Array = []
 var wave_start_item_damages: Dictionary = {}
+var wave_start_time: float = 0.0
 
 var _prev_totals: PoolIntArray = PoolIntArray()
 var _prev_sigs: Array = []
 
-# Performance-Optimierung: Cache für Source-Struktur
-var _source_cache: Array = []  # Pro Spieler: Array von Source-Objekten
-var _cache_valid: PoolByteArray = PoolByteArray()  # Pro Spieler: ist Cache gültig?
+# Performance optimization: Cache for source structure
+var _source_cache: Array = []
+var _cache_valid: PoolByteArray = PoolByteArray()
 
 static func _cmp_desc_by_damage(a: Dictionary, b: Dictionary) -> bool:
 	return a.damage > b.damage
@@ -26,7 +37,8 @@ static func _create_signature(sources: Array) -> String:
 	for entry in sources:
 		var key = entry.get("group_key", "")
 		var dmg = entry.get("damage", 0)
-		parts.append("%s:%d" % [key, dmg])
+		var cnt = entry.get("count", 1)
+		parts.append("%s:%d:%d" % [key, dmg, cnt])
 	return parts.join("|")
 
 func _ready() -> void:
@@ -40,6 +52,7 @@ func _ready() -> void:
 			
 			if i < player_count:
 				active_displays.append(container)
+				container.set_animation_settings(ANIMATION_SPEED, BAR_OPACITY, COMPACT_MODE)
 			else:
 				container.visible = false
 		else:
@@ -49,6 +62,7 @@ func _ready() -> void:
 		return
 	
 	_snapshot_wave_start(player_count)
+	wave_start_time = OS.get_ticks_msec() / 1000.0
 	
 	_prev_totals.resize(player_count)
 	_prev_sigs.resize(player_count)
@@ -60,12 +74,6 @@ func _ready() -> void:
 		_prev_sigs[i] = ""
 		_source_cache[i] = []
 		_cache_valid[i] = 0
-	
-	# Events lauschen für Cache-Invalidierung
-	var root = get_tree().root
-	if root.has_signal("item_bought") or root.has_signal("item_sold"):
-		root.connect("item_bought", self, "_invalidate_all_caches")
-		root.connect("item_sold", self, "_invalidate_all_caches")
 	
 	update_timer = Timer.new()
 	update_timer.wait_time = UPDATE_INTERVAL
@@ -79,6 +87,7 @@ func _invalidate_all_caches() -> void:
 
 func _snapshot_wave_start(player_count: int) -> void:
 	wave_start_item_damages.clear()
+	wave_start_time = OS.get_ticks_msec() / 1000.0
 	
 	for i in range(player_count):
 		if RunData.tracked_item_effects.size() <= i:
@@ -128,7 +137,6 @@ func _get_spawned_items_for_item(item: Object) -> Array:
 	if not is_instance_valid(item) or not "my_id" in item:
 		return spawned
 	
-	# Taschenfabrik spawnt normale Geschütze
 	if item.my_id == "item_pocket_factory":
 		var turret = ItemService.get_item_from_id("item_turret")
 		if is_instance_valid(turret):
@@ -137,36 +145,28 @@ func _get_spawned_items_for_item(item: Object) -> Array:
 	return spawned
 
 func _is_damage_tracking_item(source: Object) -> bool:
-	"""Prüft ob ein Item Schaden trackt"""
 	if not is_instance_valid(source):
 		return false
 	
-	# Spezialfall: Engineering Turret (ITEM_BUILDER_TURRET) trackt immer Schaden
 	if "name" in source and source.name == "ITEM_BUILDER_TURRET":
 		return true
 	
-	# Items ohne tracking_text tracken keinen Schaden
 	if not "tracking_text" in source:
 		return false
 	
-	# Nur Items mit DAMAGE_DEALT tracking
 	return source.tracking_text == "DAMAGE_DEALT"
 
 func _get_source_damage(source: Object, player_index: int) -> int:
-	# Schnelle Checks zuerst
 	if not is_instance_valid(source):
 		return 0
 	
-	# Waffen tracken immer Schaden (schnellster Pfad)
 	if "dmg_dealt_last_wave" in source:
 		var dmg = source.dmg_dealt_last_wave
 		return int(dmg) if typeof(dmg) == TYPE_INT or typeof(dmg) == TYPE_REAL else 0
 	
-	# Bounds check
 	if player_index < 0 or player_index >= RunData.tracked_item_effects.size():
 		return 0
 	
-	# Items/Characters müssen explizit Schaden tracken
 	if not "my_id" in source:
 		return 0
 	
@@ -181,7 +181,6 @@ func _get_source_damage(source: Object, player_index: int) -> int:
 	
 	var current_val = effects.get(item_id, 0)
 	
-	# Array-Check (manche Items tracken Arrays statt Zahlen)
 	if typeof(current_val) == TYPE_ARRAY:
 		return 0
 	
@@ -199,10 +198,8 @@ func _create_group_key(source: Object) -> String:
 	return "%s_t%d_c%s" % [base, tier, cursed]
 
 func _build_source_cache(player_index: int) -> Array:
-	"""Baut Cache für alle möglichen Damage-Sources (ohne Schadenswerte)"""
 	var sources = []
 	
-	# Waffen sammeln
 	var weapons = RunData.get_player_weapons(player_index)
 	for weapon in weapons:
 		if not is_instance_valid(weapon) or not "my_id" in weapon:
@@ -210,11 +207,9 @@ func _build_source_cache(player_index: int) -> Array:
 		
 		sources.append(weapon)
 		
-		# Spawned items (Türme, Landminen)
 		for spawned in _get_spawned_items_for_weapon(weapon):
 			sources.append(spawned)
 	
-	# Items sammeln
 	var items = RunData.get_player_items(player_index)
 	for item in items:
 		if not is_instance_valid(item) or not "my_id" in item:
@@ -222,19 +217,16 @@ func _build_source_cache(player_index: int) -> Array:
 		
 		sources.append(item)
 		
-		# Spawned items von Items (z.B. Taschenfabrik)
 		for spawned in _get_spawned_items_for_item(item):
 			sources.append(spawned)
 	
 	return sources
 
 func _collect_grouped_sources(player_index: int) -> Array:
-	# Cache nutzen wenn verfügbar
 	if _cache_valid[player_index] == 0:
 		_source_cache[player_index] = _build_source_cache(player_index)
 		_cache_valid[player_index] = 1
 	
-	# Gruppierung mit aktuellen Schadenswerten
 	var groups = {}
 	var cached_sources = _source_cache[player_index]
 	
@@ -244,7 +236,8 @@ func _collect_grouped_sources(player_index: int) -> Array:
 		
 		var dmg = _get_source_damage(source, player_index)
 		
-		if dmg <= 0:
+		# Apply min-damage filter
+		if dmg < MIN_DAMAGE_FILTER:
 			continue
 		
 		var key = _create_group_key(source)
@@ -259,7 +252,6 @@ func _collect_grouped_sources(player_index: int) -> Array:
 		groups[key].damage += dmg
 		groups[key].count += 1
 	
-	# Dictionary zu Array konvertieren
 	var result = []
 	result.resize(groups.size())
 	var idx = 0
@@ -273,7 +265,6 @@ func _get_top_sources(player_index: int) -> Array:
 	var all_sources = _collect_grouped_sources(player_index)
 	all_sources.sort_custom(self, "_cmp_desc_by_damage")
 	
-	# Optimiert: slice mit fester Größe
 	var count = min(all_sources.size(), TOP_K)
 	if count == 0:
 		return []
@@ -299,7 +290,7 @@ func _update_damage_bars() -> void:
 	totals.resize(player_count)
 	var max_total = 0
 	
-	# Gesamtschaden berechnen (MUSS immer neu berechnet werden!)
+	# Calculate total damage
 	for i in range(player_count):
 		var sources = _collect_grouped_sources(i)
 		var total = 0
@@ -310,7 +301,7 @@ func _update_damage_bars() -> void:
 		if total > max_total:
 			max_total = total
 	
-	# Prozentsätze berechnen (MUSS immer neu berechnet werden!)
+	# Calculate percentages
 	var percentages = PoolRealArray()
 	percentages.resize(player_count)
 	
@@ -322,16 +313,26 @@ func _update_damage_bars() -> void:
 		for i in range(player_count):
 			percentages[i] = 0.0
 	
-	# UI aktualisieren
+	# Calculate DPS
+	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
+	var dps_values = PoolIntArray()
+	dps_values.resize(player_count)
+	
+	if elapsed > 0.1:
+		for i in range(player_count):
+			dps_values[i] = int(float(totals[i]) / elapsed)
+	
+	# Update UI
 	for i in range(player_count):
 		if i >= active_displays.size() or not is_instance_valid(active_displays[i]):
 			continue
 		
 		var display = active_displays[i]
 		display.visible = true
-		display._target_alpha = 1.0
+		display._target_alpha = BAR_OPACITY
 		
 		var total = totals[i]
+		var dps = dps_values[i] if SHOW_DPS else 0
 		var top_sources = _get_top_sources(i)
 		var signature = _create_signature(top_sources)
 		
@@ -341,12 +342,21 @@ func _update_damage_bars() -> void:
 		var character = RunData.get_player_character(i)
 		var icon = character.icon if is_instance_valid(character) and "icon" in character else null
 		
-		# Balken IMMER aktualisieren (weil prozentual)
-		display.update_total_damage(total, percentages[i], max_total, icon, i)
+		# ALWAYS update bars (because they're percentage-based)
+		display.update_total_damage(
+			total, 
+			percentages[i], 
+			max_total, 
+			icon, 
+			i,
+			SHOW_DPS,
+			dps,
+			SHOW_PERCENTAGE
+		)
 		
-		# Source List nur bei Änderung aktualisieren
+		# Only update source list when changed
 		if sig_changed:
-			display.update_source_list(top_sources, i)
+			display.update_source_list(top_sources, i, SHOW_ITEM_COUNT)
 			_prev_sigs[i] = signature
 		
 		if total_changed:
