@@ -63,14 +63,14 @@ margin_right = -8.0
 custom_constants/separation = 8
 
 [node name="CharacterIcon" type="TextureRect" parent="TotalDamageBar/HBoxContainer"]
-margin_right = 36.0
+margin_right = 40.0
 margin_bottom = 50.0
-rect_min_size = Vector2( 36, 36 )
+rect_min_size = Vector2( 40, 40 )
 expand = true
 stretch_mode = 6
 
 [node name="DamageLabel" type="Label" parent="TotalDamageBar/HBoxContainer"]
-margin_left = 44.0
+margin_left = 48.0
 margin_top = 16.0
 margin_right = 134.0
 margin_bottom = 30.0
