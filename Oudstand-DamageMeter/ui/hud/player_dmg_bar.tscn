@@ -2,7 +2,6 @@
 
 [ext_resource path="res://mods-unpacked/Oudstand-DamageMeter/ui/hud/player_dmg_bar.gd" type="Script" id=1]
 [ext_resource path="res://mods-unpacked/Oudstand-DamageMeter/ui/hud/dmg_source_item.tscn" type="PackedScene" id=2]
-[ext_resource path="res://mods-unpacked/Oudstand-DamageMeter/ui/hud/player_damage_bar_reorder.gd" type="Script" id=3]
 [ext_resource path="res://resources/fonts/actual/base/font_26_outline.tres" type="DynamicFont" id=4]
 [ext_resource path="res://ui/hud/ui_lifebar_frame.png" type="Texture" id=5]
 [ext_resource path="res://ui/hud/ui_lifebar_bg.png" type="Texture" id=6]
@@ -14,9 +13,6 @@ margin_bottom = 168.0
 custom_constants/separation = 4
 script = ExtResource( 1 )
 source_item_scene = ExtResource( 2 )
-
-[node name="ReorderLogic" type="Node" parent="."]
-script = ExtResource( 3 )
 
 [node name="SourceListBackground" type="Control" parent="."]
 margin_right = 150.0

@@ -14,6 +14,7 @@ var _mirrored: bool = false
 var _icon_position: int = -1
 var _target_alpha: float = 1.0
 var _current_alpha: float = 1.0
+var _base_alpha: float = 1.0  # Coop transparency (0.75 in multiplayer, 1.0 in singleplayer)
 
 # Settings (set by updater)
 var _lerp_speed: float = 6.0
@@ -35,9 +36,13 @@ func set_animation_settings(animation_speed: float, opacity: float, compact_mode
 	_lerp_speed = animation_speed
 	_max_alpha = opacity
 	_compact_mode = compact_mode
-	
+
 	if _compact_mode:
 		icon_rect.rect_min_size = Vector2(ICON_SIZE_COMPACT, ICON_SIZE_COMPACT)
+
+func set_base_alpha(alpha: float) -> void:
+	_base_alpha = alpha
+	modulate.a = _current_alpha * _base_alpha
 
 func _process(delta: float) -> void:
 	if abs(_current_progress - _target_progress) > 0.1:
@@ -46,7 +51,7 @@ func _process(delta: float) -> void:
 
 	if abs(_current_alpha - _target_alpha) > 0.01:
 		_current_alpha = lerp(_current_alpha, _target_alpha, _fade_speed * delta)
-		modulate.a = _current_alpha
+		modulate.a = _current_alpha * _base_alpha
 
 func _set_layout(player_index: int) -> void:
 	var is_right = (player_index == 1 or player_index == 3)

@@ -43,13 +43,13 @@ static func _create_signature(sources: Array) -> String:
 
 func _ready() -> void:
 	var player_count: int = RunData.get_player_count()
-	
+
 	for i in range(4):
 		var path = "LifeContainerP%s/PlayerDamageContainerP%s" % [str(i + 1), str(i + 1)]
 		var container = _hud.get_node_or_null(path)
 		if is_instance_valid(container):
 			all_display_containers.append(container)
-			
+
 			if i < player_count:
 				active_displays.append(container)
 				container.set_animation_settings(ANIMATION_SPEED, BAR_OPACITY, COMPACT_MODE)
@@ -223,40 +223,32 @@ func _collect_grouped_sources(player_index: int) -> Array:
 	if _cache_valid[player_index] == 0:
 		_source_cache[player_index] = _build_source_cache(player_index)
 		_cache_valid[player_index] = 1
-	
+
 	var groups = {}
 	var cached_sources = _source_cache[player_index]
-	
+
 	for source in cached_sources:
 		if not is_instance_valid(source):
 			continue
-		
+
 		var dmg = _get_source_damage(source, player_index)
-		
-		# Apply min-damage filter
+
 		if dmg < MIN_DAMAGE_FILTER:
 			continue
-		
+
 		var key = _create_group_key(source)
-		if not groups.has(key):
+		if groups.has(key):
+			groups[key].damage += dmg
+			groups[key].count += 1
+		else:
 			groups[key] = {
 				"source": source,
-				"damage": 0,
+				"damage": dmg,
 				"group_key": key,
-				"count": 0
+				"count": 1
 			}
-		
-		groups[key].damage += dmg
-		groups[key].count += 1
-	
-	var result = []
-	result.resize(groups.size())
-	var idx = 0
-	for group in groups.values():
-		result[idx] = group
-		idx += 1
-	
-	return result
+
+	return groups.values()
 
 func _get_top_sources(player_index: int) -> Array:
 	var all_sources = _collect_grouped_sources(player_index)
@@ -292,8 +284,7 @@ func _update_damage_bars() -> void:
 	var totals = []
 	totals.resize(player_count)
 	var max_total = 0
-	
-	# Calculate total damage
+
 	for i in range(player_count):
 		var sources = _collect_grouped_sources(i)
 		var total = 0
@@ -303,11 +294,10 @@ func _update_damage_bars() -> void:
 		totals[i] = total
 		if total > max_total:
 			max_total = total
-	
-	# Calculate percentages
+
 	var percentages = PoolRealArray()
 	percentages.resize(player_count)
-	
+
 	if max_total > 0:
 		var max_float = float(max_total)
 		for i in range(player_count):
@@ -315,20 +305,17 @@ func _update_damage_bars() -> void:
 	else:
 		for i in range(player_count):
 			percentages[i] = 0.0
-	
-	# Calculate DPS
+
 	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
 	var dps_values = []
 	dps_values.resize(player_count)
-	
+
 	if elapsed > 0.1:
 		for i in range(player_count):
 			dps_values[i] = int(float(totals[i]) / elapsed)
 	
-	# Determine if percentage should be shown (only for multiple players)
 	var show_percentage_ui = SHOW_PERCENTAGE and player_count > 1
-	
-	# Update UI
+
 	for i in range(player_count):
 		if i >= active_displays.size() or not is_instance_valid(active_displays[i]):
 			continue
@@ -347,8 +334,7 @@ func _update_damage_bars() -> void:
 		
 		var character = RunData.get_player_character(i)
 		var icon = character.icon if is_instance_valid(character) and "icon" in character else null
-		
-		# ALWAYS update bars (because they're percentage-based)
+
 		display.update_total_damage(
 			total, 
 			percentages[i], 
@@ -359,8 +345,7 @@ func _update_damage_bars() -> void:
 			dps,
 			show_percentage_ui
 		)
-		
-		# Only update source list when changed
+
 		if sig_changed:
 			display.update_source_list(top_sources, i, SHOW_ITEM_COUNT)
 			_prev_sigs[i] = signature
