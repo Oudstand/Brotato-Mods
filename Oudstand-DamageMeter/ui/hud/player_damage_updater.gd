@@ -13,11 +13,10 @@ const COMPACT_MODE: bool = false        # Smaller icons and text
 # ===================================================
 
 const MOD_NAME: String = "DamageMeter"
-const MAX_INT32: int = 2147483647
 
 onready var _hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
 
-var update_timer: Timer = null
+var _update_accumulator: float = 0.0
 var active_displays: Array = []
 var all_display_containers: Array = []
 var wave_start_item_damages: Dictionary = {}
@@ -75,12 +74,6 @@ func _ready() -> void:
 		_prev_sigs[i] = ""
 		_source_cache[i] = []
 		_cache_valid[i] = 0
-	
-	update_timer = Timer.new()
-	update_timer.wait_time = UPDATE_INTERVAL
-	update_timer.connect("timeout", self, "_update_damage_bars")
-	add_child(update_timer)
-	update_timer.start()
 
 func _invalidate_all_caches() -> void:
 	for i in range(_cache_valid.size()):
@@ -162,14 +155,7 @@ func _get_source_damage(source: Object, player_index: int) -> int:
 		return 0
 	
 	if "dmg_dealt_last_wave" in source:
-		var dmg = source.dmg_dealt_last_wave
-		# Avoid 32-bit overflow: check if value is negative (overflow indicator)
-		if typeof(dmg) == TYPE_INT or typeof(dmg) == TYPE_REAL:
-			# If negative due to overflow, clamp to safe max value
-			if dmg < 0:
-				return MAX_INT32
-			return int(dmg)
-		return 0
+		return int(source.dmg_dealt_last_wave)
 	
 	if player_index < 0 or player_index >= RunData.tracked_item_effects.size():
 		return 0
@@ -194,10 +180,6 @@ func _get_source_damage(source: Object, player_index: int) -> int:
 	var start_val = wave_start_item_damages.get(player_index, {}).get(item_id, 0)
 	var damage_diff = int(current_val - start_val)
 
-	# Handle overflow: if difference is negative (but values should be positive), clamp
-	if damage_diff < 0 and current_val > 0:
-		return MAX_INT32
-
 	return max(0, damage_diff) as int
 
 func _create_group_key(source: Object) -> String:
@@ -212,27 +194,29 @@ func _create_group_key(source: Object) -> String:
 
 func _build_source_cache(player_index: int) -> Array:
 	var sources = []
-	
-	var weapons = RunData.get_player_weapons(player_index)
+
+	# Direct access to weapons (no .duplicate())
+	var weapons = RunData.players_data[player_index].weapons
 	for weapon in weapons:
 		if not is_instance_valid(weapon) or not "my_id" in weapon:
 			continue
-		
+
 		sources.append(weapon)
-		
+
 		for spawned in _get_spawned_items_for_weapon(weapon):
 			sources.append(spawned)
-	
-	var items = RunData.get_player_items(player_index)
+
+	# Direct access to items (no .duplicate())
+	var items = RunData.players_data[player_index].items
 	for item in items:
 		if not is_instance_valid(item) or not "my_id" in item:
 			continue
-		
+
 		sources.append(item)
-		
+
 		for spawned in _get_spawned_items_for_item(item):
 			sources.append(spawned)
-	
+
 	return sources
 
 func _collect_grouped_sources(player_index: int) -> Array:
@@ -277,17 +261,23 @@ func _collect_grouped_sources(player_index: int) -> Array:
 func _get_top_sources(player_index: int) -> Array:
 	var all_sources = _collect_grouped_sources(player_index)
 	all_sources.sort_custom(self, "_cmp_desc_by_damage")
-	
+
 	var count = min(all_sources.size(), TOP_K)
 	if count == 0:
 		return []
-	
+
 	var result = []
 	result.resize(count)
 	for i in range(count):
 		result[i] = all_sources[i]
-	
+
 	return result
+
+func _physics_process(delta: float) -> void:
+	_update_accumulator += delta
+	if _update_accumulator >= UPDATE_INTERVAL:
+		_update_accumulator -= UPDATE_INTERVAL
+		_update_damage_bars()
 
 func _update_damage_bars() -> void:
 	var wave_active = is_instance_valid(wave_timer) and wave_timer.time_left > 0.0
@@ -377,7 +367,3 @@ func _update_damage_bars() -> void:
 		
 		if total_changed:
 			_prev_totals[i] = total
-
-func _exit_tree() -> void:
-	if is_instance_valid(update_timer):
-		update_timer.queue_free()
