@@ -1,17 +1,33 @@
 {
     "name": "DamageMeter",
     "namespace": "Oudstand",
-    "version_number": "1.1.0",
-    "description": "Zeigt den Gesamt-Schaden sowie die Top 6 Schadensquellen (Waffen/Items) pro Spieler an.",
+    "version_number": "1.2.0",
+    "description": "Displays total damage and top damage sources (weapons/items) for each player.",
     "website_url": "",
     "dependencies": [],
     "extra": {
         "godot": {
+            "optional_dependencies": ["dami-ModOptions"],
             "incompatibilities": [],
             "authors": [ "Oudstand" ],
             "tags": [ "damage", "hud", "player", "bar", "weapons", "items" ],
             "compatible_mod_loader_version": [ "6.2.0" ],
             "compatible_game_version": [ "1.1.12.0" ],
+            "config_defaults": {
+                "opacity": 1.0,
+                "opacity_min": 0.3,
+                "opacity_max": 1.0,
+                "opacity_step": 0.1,
+                "opacity_format": "%.1f",
+                "number_of_sources": 6.0,
+                "number_of_sources_min": 1.0,
+                "number_of_sources_max": 25.0,
+                "number_of_sources_step": 1.0,
+                "number_of_sources_format": "%.0f",
+                "show_item_count": false,
+                "show_dps": false,
+                "show_percentage": true
+            },
             "config_schema": {}
         }
     }

@@ -37,8 +37,11 @@ func set_animation_settings(animation_speed: float, opacity: float, compact_mode
 	_max_alpha = opacity
 	_compact_mode = compact_mode
 
+	# Update icon size based on compact mode
 	if _compact_mode:
 		icon_rect.rect_min_size = Vector2(ICON_SIZE_COMPACT, ICON_SIZE_COMPACT)
+	else:
+		icon_rect.rect_min_size = Vector2(ICON_SIZE_NORMAL, ICON_SIZE_NORMAL)
 
 func set_base_alpha(alpha: float) -> void:
 	_base_alpha = alpha

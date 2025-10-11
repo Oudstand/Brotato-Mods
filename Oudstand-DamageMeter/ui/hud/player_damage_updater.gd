@@ -1,18 +1,26 @@
 extends "res://ui/hud/ui_wave_timer.gd"
 
-# === SETTINGS (You can adjust values here) ===
-const TOP_K: int = 6                    # Number of top damage sources to display (1-12)
-const SHOW_ITEM_COUNT: bool = false     # Show count for grouped items (e.g. "x5")
-const SHOW_DPS: bool = false            # Show damage per second
-const BAR_OPACITY: float = 1.0          # Transparency (0.3-1.0)
-const UPDATE_INTERVAL: float = 0.1      # Update frequency in seconds (0.05-0.5)
-const ANIMATION_SPEED: float = 6.0      # Bar animation speed (1.0-20.0)
-const MIN_DAMAGE_FILTER: int = 1        # Minimum damage to display (0 = all)
-const SHOW_PERCENTAGE: bool = true      # Show percentage values (only if multiple players)
-const COMPACT_MODE: bool = false        # Smaller icons and text
-# ===================================================
+# === SETTINGS ===
+# Config is managed by ConfigManager singleton (config_manager.gd)
+# - With Mod Options: Configure in-game via Options → Mods → DamageMeter
+# - Without Mod Options: Edit user://Oudstand-DamageMeter_config.json
+# ================
 
 const MOD_NAME: String = "DamageMeter"
+
+# Fixed settings (not configurable via ModOptions)
+const UPDATE_INTERVAL: float = 0.1
+const ANIMATION_SPEED: float = 6.0
+const MIN_DAMAGE_FILTER: int = 1
+const COMPACT_MODE: bool = false
+
+# Config values (loaded from ConfigManager singleton)
+var _config_manager = null
+var TOP_K: int = 6
+var SHOW_ITEM_COUNT: bool = false
+var SHOW_DPS: bool = false
+var BAR_OPACITY: float = 1.0
+var SHOW_PERCENTAGE: bool = true
 
 onready var _hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
 
@@ -41,7 +49,50 @@ static func _create_signature(sources: Array) -> String:
 		parts.append("%s:%d:%d" % [key, dmg, cnt])
 	return parts.join("|")
 
+func _load_config_from_manager() -> void:
+	if not is_instance_valid(_config_manager):
+		return
+
+	TOP_K = _config_manager.TOP_K
+	SHOW_ITEM_COUNT = _config_manager.SHOW_ITEM_COUNT
+	SHOW_DPS = _config_manager.SHOW_DPS
+	BAR_OPACITY = _config_manager.BAR_OPACITY
+	SHOW_PERCENTAGE = _config_manager.SHOW_PERCENTAGE
+
+	ModLoaderLog.info("Loaded config from manager: TOP_K=%d, SHOW_DPS=%s, SHOW_ITEM_COUNT=%s, OPACITY=%.2f" % [TOP_K, SHOW_DPS, SHOW_ITEM_COUNT, BAR_OPACITY], MOD_NAME)
+
+func _on_config_changed() -> void:
+	# Reload config from manager
+	_load_config_from_manager()
+
+	# Update displays
+	for display in active_displays:
+		if is_instance_valid(display):
+			display.set_animation_settings(ANIMATION_SPEED, BAR_OPACITY, COMPACT_MODE)
+
+	# Invalidate cache to apply changes immediately
+	_invalidate_all_caches()
+
 func _ready() -> void:
+	# Get ConfigManager singleton
+	var mod_loader = get_node_or_null("/root/ModLoader")
+	if is_instance_valid(mod_loader):
+		var damage_meter_mod = mod_loader.get_node_or_null("Oudstand-DamageMeter")
+		if is_instance_valid(damage_meter_mod):
+			_config_manager = damage_meter_mod.get_node_or_null("DamageMeterConfig")
+			if is_instance_valid(_config_manager):
+				# Load config from manager
+				_load_config_from_manager()
+				# Connect to config changes
+				if _config_manager.connect("config_changed", self, "_on_config_changed") == OK:
+					ModLoaderLog.info("Connected to ConfigManager", MOD_NAME)
+			else:
+				ModLoaderLog.warning("ConfigManager not found", MOD_NAME)
+		else:
+			ModLoaderLog.warning("DamageMeter mod node not found", MOD_NAME)
+	else:
+		ModLoaderLog.warning("ModLoader not found", MOD_NAME)
+
 	var player_count: int = RunData.get_player_count()
 
 	for i in range(4):
@@ -52,7 +103,9 @@ func _ready() -> void:
 
 			if i < player_count:
 				active_displays.append(container)
+				# Apply loaded settings
 				container.set_animation_settings(ANIMATION_SPEED, BAR_OPACITY, COMPACT_MODE)
+				ModLoaderLog.debug("Set settings for P%d: BAR_OPACITY=%.2f" % [i+1, BAR_OPACITY], MOD_NAME)
 			else:
 				container.visible = false
 		else:
@@ -309,6 +362,10 @@ func _update_damage_bars() -> void:
 	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
 	var dps_values = []
 	dps_values.resize(player_count)
+
+	# Initialize all values to 0
+	for i in range(player_count):
+		dps_values[i] = 0
 
 	if elapsed > 0.1:
 		for i in range(player_count):

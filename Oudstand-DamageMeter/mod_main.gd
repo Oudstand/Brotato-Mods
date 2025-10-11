@@ -1,8 +1,17 @@
 extends Node
 
 const MOD_DIR_NAME := "Oudstand-DamageMeter"
+const MOD_ID := "Oudstand-DamageMeter"
+
+var config_manager = null
 
 func _init():
+	# Add ConfigManager as an autoload (singleton)
+	var config_script = load(ModLoaderMod.get_unpacked_dir().plus_file(MOD_DIR_NAME).plus_file("config_manager.gd"))
+	config_manager = config_script.new()
+	config_manager.name = "DamageMeterConfig"
+	add_child(config_manager)
+
 	var extensions_dir_path = ModLoaderMod.get_unpacked_dir().plus_file(MOD_DIR_NAME).plus_file("ui/hud")
 	ModLoaderMod.install_script_extension(extensions_dir_path.plus_file("player_damage_updater.gd"))
 	# Don't extend player_ui_elements.gd - it causes signal duplication issues

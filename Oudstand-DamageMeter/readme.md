@@ -28,19 +28,26 @@ A comprehensive damage tracking mod for Brotato that displays real-time damage s
 
 ## Configuration
 
-All settings can be configured by editing constants at the top of `player_damage_updater.gd`:
+### With Mod Options (Recommended)
 
-```gdscript
-const TOP_K: int = 6                    // Number of top damage sources to display (1-12)
-const SHOW_ITEM_COUNT: bool = true      // Show count for grouped items (e.g. "x5")
-const SHOW_DPS: bool = false            // Show damage per second
-const BAR_OPACITY: float = 1.0          // Transparency (0.3-1.0)
-const UPDATE_INTERVAL: float = 0.1      // Update frequency in seconds (0.05-0.5)
-const ANIMATION_SPEED: float = 6.0      // Bar animation speed (1.0-20.0)
-const MIN_DAMAGE_FILTER: int = 1        // Minimum damage to display (0 = show all)
-const SHOW_PERCENTAGE: bool = true      // Show percentage values
-const COMPACT_MODE: bool = false        // Smaller icons and text
-```
+If you have **Mod Options** installed, you can configure all settings in-game:
+1. Go to **Options → Mods → DamageMeter**
+2. Adjust settings with sliders and toggles
+3. Changes are saved automatically and persist across game restarts
+4. Changes apply instantly without needing to restart
+
+**Install Mod Options:** [Thunderstore - dami-ModOptions](https://thunderstore.io/c/brotato/p/dami/ModOptions/)
+
+### Without Mod Options
+
+The mod works perfectly fine without Mod Options using sensible default values. Settings are saved automatically and persist between sessions. Advanced users can manually edit the config file at `%APPDATA%\Godot\app_userdata\Brotato\Oudstand-DamageMeter_config.json`.
+
+**Available Settings (requires Mod Options):**
+- **OPACITY** (0.3-1.0): Transparency of all UI elements
+- **NUMBER_OF_SOURCES** (1-25): Number of top damage sources to display
+- **SHOW_ITEM_COUNT**: Show count for grouped items (e.g. "x5")
+- **SHOW_DPS**: Show damage per second
+- **SHOW_PERCENTAGE**: Show percentage values relative to top player
 
 ## How It Works
 
@@ -72,6 +79,13 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
   - Player 2: 80% progress bar
 - Bars update dynamically as damage changes
 
+## Optional Dependencies
+
+- **Mod Options** (dami-ModOptions): Enables in-game configuration UI
+  - Without it, the mod uses default values and works fine
+  - Recommended for users who want to customize settings
+  - Config persistence works with or without Mod Options installed
+
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
@@ -80,7 +94,6 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
 
 ## Known Issues
 
-- Config file support is not yet implemented (use constants instead)
 - Some modded items may not be tracked if they don't use standard damage tracking
 
 ## Credits
@@ -97,12 +110,22 @@ For bugs or feature requests, please create an issue on the project repository.
 
 ## Changelog
 
+### v1.2.0
+- **Configuration System**: Full in-game configuration support with persistence
+- Added Mod Options (dami-ModOptions) as optional dependency for config UI
+- All settings configurable in-game when Mod Options is installed
+- Works perfectly fine without Mod Options using default values
+- Config changes are saved automatically and persist across game restarts
+- Live config updates - changes apply instantly without restarting
+- Custom config file support for advanced users
+- Streamlined settings: removed rarely-used options (compact mode, animation speed, etc.)
+
 ### v1.1.0
 - Added Pocket Factory support
 - Performance optimizations with intelligent caching
 - Added item count display for grouped items
 - Added DPS display option
-- Added configurable settings
+- Added configurable settings (code-based)
 - Fixed cursed item display bug
 - Added rounded icon corners
 - Improved damage filtering
