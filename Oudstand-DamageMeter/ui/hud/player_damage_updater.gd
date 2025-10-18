@@ -135,17 +135,59 @@ func _invalidate_all_caches() -> void:
 func _snapshot_wave_start(player_count: int) -> void:
 	wave_start_item_damages.clear()
 	wave_start_time = OS.get_ticks_msec() / 1000.0
-	
+
+	# Find builder turrets and update their tracking keys
+	_fix_builder_turret_tracking_keys(player_count)
+
 	for i in range(player_count):
 		if RunData.tracked_item_effects.size() <= i:
 			continue
-		
+
 		var item_map = {}
 		for item_id in RunData.tracked_item_effects[i].keys():
 			var val = RunData.tracked_item_effects[i].get(item_id, 0)
-			item_map[item_id] = int(val) if typeof(val) != TYPE_ARRAY else 0
-		
+			var current_val = int(val) if typeof(val) != TYPE_ARRAY else 0
+
+			# For builder turret items, the game resets the counter between waves
+			# We reset both the snapshot AND the actual value to ensure sync
+			if item_id.begins_with("item_builder_turret_"):
+				RunData.tracked_item_effects[i][item_id] = 0
+				item_map[item_id] = 0
+			else:
+				item_map[item_id] = current_val
+
 		wave_start_item_damages[i] = item_map
+
+func _fix_builder_turret_tracking_keys(_player_count: int) -> void:
+	# Get the main scene to access structures
+	var main = get_tree().get_current_scene()
+	if not is_instance_valid(main):
+		return
+
+	# Try to get EntitySpawner
+	var entity_spawner = main.get_node_or_null("EntitySpawner")
+	if not is_instance_valid(entity_spawner) or not "structures" in entity_spawner:
+		return
+
+	# Iterate through all structures to find builder turrets
+	for structure in entity_spawner.structures:
+		if not is_instance_valid(structure):
+			continue
+
+		# Check if it's a builder turret
+		if not structure.get_script():
+			continue
+
+		var script_path = structure.get_script().resource_path
+		if "builder_turret" in script_path.to_lower():
+			# Found a builder turret!
+			if "player_index" in structure and "_damage_tracking_key" in structure and "_current_level" in structure:
+				var current_level = structure._current_level
+				var expected_key = "item_builder_turret_" + str(current_level)
+
+				# Update the tracking key to match the current level
+				if structure._damage_tracking_key != expected_key:
+					structure._damage_tracking_key = expected_key
 
 func _get_turret_id_for_tier(weapon: Object) -> String:
 	if not is_instance_valid(weapon) or not "tier" in weapon:
@@ -206,30 +248,30 @@ func _is_damage_tracking_item(source: Object) -> bool:
 func _get_source_damage(source: Object, player_index: int) -> int:
 	if not is_instance_valid(source):
 		return 0
-	
+
 	if "dmg_dealt_last_wave" in source:
 		return int(source.dmg_dealt_last_wave)
-	
+
 	if player_index < 0 or player_index >= RunData.tracked_item_effects.size():
 		return 0
-	
+
 	if not "my_id" in source:
 		return 0
-	
+
 	if not _is_damage_tracking_item(source):
 		return 0
-	
+
 	var item_id = source.my_id
 	var effects = RunData.tracked_item_effects[player_index]
-	
+
 	if not effects.has(item_id):
 		return 0
-	
+
 	var current_val = effects.get(item_id, 0)
-	
+
 	if typeof(current_val) == TYPE_ARRAY:
 		return 0
-	
+
 	var start_val = wave_start_item_damages.get(player_index, {}).get(item_id, 0)
 	var damage_diff = int(current_val - start_val)
 
@@ -238,11 +280,11 @@ func _get_source_damage(source: Object, player_index: int) -> int:
 func _create_group_key(source: Object) -> String:
 	if not is_instance_valid(source):
 		return ""
-	
+
 	var base = source.my_id if "my_id" in source else ""
 	var tier = source.tier if "tier" in source else -1
 	var cursed = source.is_cursed if "is_cursed" in source else false
-	
+
 	return "%s_t%d_c%s" % [base, tier, cursed]
 
 func _build_source_cache(player_index: int) -> Array:
