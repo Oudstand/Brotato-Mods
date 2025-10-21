@@ -285,7 +285,14 @@ func _create_group_key(source: Object) -> String:
 	var tier = source.tier if "tier" in source else -1
 	var cursed = source.is_cursed if "is_cursed" in source else false
 
-	return "%s_t%d_c%s" % [base, tier, cursed]
+	# For items, ignore cursed status (damage is tracked together by the game)
+	# For weapons, keep cursed status (damage is tracked per weapon instance)
+	var is_weapon = "dmg_dealt_last_wave" in source
+
+	if is_weapon:
+		return "%s_t%d_c%s" % [base, tier, cursed]
+	else:
+		return "%s_t%d" % [base, tier]
 
 func _build_source_cache(player_index: int) -> Array:
 	var sources = []
@@ -334,6 +341,20 @@ func _collect_grouped_sources(player_index: int) -> Array:
 		var key = _create_group_key(source)
 		if groups.has(key):
 			groups[key].count += 1
+
+			# For weapons, accumulate damage (each weapon has its own dmg_dealt_last_wave)
+			# For items, don't accumulate (they share the same tracked_item_effects entry)
+			var is_weapon = "dmg_dealt_last_wave" in source
+			if is_weapon:
+				groups[key].damage += dmg
+
+			# Prefer non-cursed icon for items (if this item is not cursed and current source is cursed)
+			var current_is_cursed = groups[key].source.is_cursed if "is_cursed" in groups[key].source else false
+			var new_is_cursed = source.is_cursed if "is_cursed" in source else false
+
+			if current_is_cursed and not new_is_cursed:
+				groups[key].source = source
+
 			continue
 
 		groups[key] = {
