@@ -26,6 +26,24 @@ anchor_bottom = 1.0
 expand = true
 stretch_mode = 6
 
+[node name="CountBadge" type="Panel" parent="Content/IconBackground"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -20.0
+margin_top = -12.0
+margin_right = 2.0
+margin_bottom = 2.0
+
+[node name="CountLabel" type="Label" parent="Content/IconBackground/CountBadge"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+text = "x2"
+align = 1
+valign = 1
+
 [node name="Label" type="Label" parent="Content"]
 margin_left = 48.0
 margin_top = 13.0

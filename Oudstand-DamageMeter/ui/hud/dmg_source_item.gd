@@ -9,29 +9,45 @@ const LABEL_WIDTH_RIGHT: int = 250
 onready var content: HBoxContainer = $Content
 onready var icon_bg: Panel = $Content/IconBackground
 onready var icon: TextureRect = $Content/IconBackground/Icon
+onready var count_badge: Panel = $Content/IconBackground/CountBadge
+onready var count_label: Label = $Content/IconBackground/CountBadge/CountLabel
 onready var label: Label = $Content/Label
 
 var _is_right: bool = false
+
+func _ready() -> void:
+	# Style the count badge with dark semi-transparent background
+	if is_instance_valid(count_badge):
+		var stylebox = StyleBoxFlat.new()
+		stylebox.bg_color = Color(0, 0, 0, 0.7)  # Dark semi-transparent
+		stylebox.corner_radius_top_left = 3
+		stylebox.corner_radius_top_right = 3
+		stylebox.corner_radius_bottom_left = 3
+		stylebox.corner_radius_bottom_right = 3
+		count_badge.add_stylebox_override("panel", stylebox)
 
 func set_data(source_info: Dictionary, show_item_count: bool = true) -> void:
 	var source = source_info.get("source")
 	if not is_instance_valid(source) or not "icon" in source:
 		return
-	
+
 	var damage = source_info.get("damage", 0)
 	var count = source_info.get("count", 1)
-	
-	# Build label text
-	var damage_text = Text.get_formatted_number(damage)
-	
-	if show_item_count and count > 1:
-		label.text = "%s (x%d)" % [damage_text, count]
-	else:
-		label.text = damage_text
-	
+
+	# Set damage text (without count)
+	label.text = Text.get_formatted_number(damage)
+
+	# Show count badge on icon if enabled and count > 1
+	if is_instance_valid(count_badge) and is_instance_valid(count_label):
+		if show_item_count and count > 1:
+			count_label.text = "x%d" % count
+			count_badge.visible = true
+		else:
+			count_badge.visible = false
+
 	if is_instance_valid(icon):
 		icon.texture = source.icon
-	
+
 	# Set background color based on rarity
 	if "tier" in source:
 		var is_cursed = source.is_cursed if "is_cursed" in source else false
