@@ -390,7 +390,7 @@ func _apply_spawned_count_overrides(groups: Dictionary, player_index: int) -> vo
 		return
 
 	# Find common turret group and add Pocket Factory spawns to count
-	var turret_key = "item_turret_t0_cFalse"  # Common, non-cursed turret (matches Godot dictionary string)
+	var turret_key = "item_turret_t0"  # Common turret (items don't include cursed status in key)
 	if groups.has(turret_key):
 		var base_count = groups[turret_key].count
 		var non_pf_sources = max(0, base_count - 1)  # subtract Pocket Factory placeholder if present
