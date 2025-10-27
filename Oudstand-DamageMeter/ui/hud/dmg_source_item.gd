@@ -75,7 +75,6 @@ func _update_background_color(tier: int, is_cursed: bool) -> void:
 	icon_bg._update_stylebox(is_cursed, tier)
 
 	# Override with our own stylebox to avoid the gray lerp in icon_panel
-	# icon_panel.gd mixes colors with gray which makes them too pale
 	var stylebox = StyleBoxFlat.new()
 	ItemService.change_inventory_element_stylebox_from_tier(stylebox, tier, 0.3)
 
