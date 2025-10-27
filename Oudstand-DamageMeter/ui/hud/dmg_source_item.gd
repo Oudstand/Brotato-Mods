@@ -51,28 +51,42 @@ func set_data(source_info: Dictionary, show_item_count: bool = true) -> void:
 		icon.texture = source.icon if typeof(source) != TYPE_DICTIONARY else source["icon"]
 
 	# Set background color based on rarity
-	if "tier" in source:
-		var is_cursed = source.is_cursed if "is_cursed" in source else false
-		_update_background_color(source.tier, is_cursed)
+	var tier = null
+	var is_cursed = false
+
+	if typeof(source) == TYPE_DICTIONARY:
+		tier = source.get("tier")
+		is_cursed = source.get("is_cursed", false)
+	else:
+		# For Objects (Items/Weapons), directly access properties
+		if "tier" in source:
+			tier = source.tier
+		if "is_cursed" in source:
+			is_cursed = source.is_cursed
+
+	if tier != null:
+		_update_background_color(tier, is_cursed)
 
 func _update_background_color(tier: int, is_cursed: bool) -> void:
 	if not is_instance_valid(icon_bg):
 		return
-	
+
+	# Call icon_panel's _update_stylebox to set curse border
+	icon_bg._update_stylebox(is_cursed, tier)
+
+	# Override with our own stylebox to avoid the gray lerp in icon_panel
+	# icon_panel.gd mixes colors with gray which makes them too pale
 	var stylebox = StyleBoxFlat.new()
 	ItemService.change_inventory_element_stylebox_from_tier(stylebox, tier, 0.3)
-	
+
 	# Rounded corners
 	stylebox.corner_radius_top_left = 6
 	stylebox.corner_radius_top_right = 6
 	stylebox.corner_radius_bottom_left = 6
 	stylebox.corner_radius_bottom_right = 6
-	
+
+	# Apply our cleaner stylebox
 	icon_bg.add_stylebox_override("panel", stylebox)
-	
-	# IMPORTANT: Always set cursed status (even false) to override old states
-	if icon_bg.has_method("_update_stylebox"):
-		icon_bg._update_stylebox(is_cursed)
 
 func set_mod_alignment(is_right: bool) -> void:
 	if _is_right == is_right:
