@@ -3,8 +3,6 @@ extends Node
 const MOD_DIR_NAME := "Oudstand-DamageMeter"
 const MOD_ID := "Oudstand-DamageMeter"
 
-var config_manager = null
-
 
 func _init():
 	var mod_dir_path := ModLoaderMod.get_unpacked_dir().plus_file(MOD_DIR_NAME)
@@ -14,26 +12,89 @@ func _init():
 	_install_extensions(mod_dir_path)
 
 
+func _ready():
+	# Register options with ModOptions (after it's loaded)
+	call_deferred("_register_mod_options")
+
+
 func _load_translations(mod_dir_path: String) -> void:
 	var translations_dir := mod_dir_path.plus_file("translations")
 	ModLoaderMod.add_translation(translations_dir.plus_file("DamageMeter.en.translation"))
 	ModLoaderMod.add_translation(translations_dir.plus_file("DamageMeter.de.translation"))
 
 
-func _setup_autoloads(mod_dir_path: String) -> void:
-	config_manager = _create_autoload(
-		mod_dir_path.plus_file("config_manager.gd"),
-		"DamageMeterConfig"
-	)
+func _get_mod_options() -> Node:
+	# Get sibling mod node (both are children of ModLoader)
+	var parent = get_parent()
+	if not parent:
+		return null
+	var mod_options_mod = parent.get_node_or_null("Oudstand-ModOptions")
+	if not mod_options_mod:
+		return null
+	return mod_options_mod.get_node_or_null("ModOptions")
 
+
+func _register_mod_options() -> void:
+	var mod_options = _get_mod_options()
+	if not mod_options:
+		ModLoaderLog.error("ModOptions not found, cannot register options", MOD_ID)
+		return
+
+	mod_options.register_mod_options("DamageMeter", {
+		"tab_title": "DAMAGEMETER_TAB_TITLE",
+		"options": [
+			{
+				"type": "slider",
+				"id": "opacity",
+				"label": "DAMAGEMETER_OPACITY_LABEL",
+				"min": 0.3,
+				"max": 1.0,
+				"step": 0.1,
+				"default": 1.0
+			},
+			{
+				"type": "slider",
+				"id": "top_k",
+				"label": "DAMAGEMETER_NUMBER_OF_SOURCES_LABEL",
+				"min": 1.0,
+				"max": 25.0,
+				"step": 1.0,
+				"default": 6.0,
+				"display_as_integer": true
+			},
+			{
+				"type": "toggle",
+				"id": "show_item_count",
+				"label": "DAMAGEMETER_SHOW_ITEM_COUNT_LABEL",
+				"default": true
+			},
+			{
+				"type": "toggle",
+				"id": "show_dps",
+				"label": "DAMAGEMETER_SHOW_DPS_LABEL",
+				"default": false
+			},
+			{
+				"type": "toggle",
+				"id": "show_percentage",
+				"label": "DAMAGEMETER_SHOW_PERCENTAGE_LABEL",
+				"default": true
+			},
+			{
+				"type": "toggle",
+				"id": "hide_total_bar_singleplayer",
+				"label": "DAMAGEMETER_HIDE_TOTAL_BAR_SINGLEPLAYER_LABEL",
+				"default": false
+			}
+		],
+		"info_text": "DAMAGEMETER_INFO_TEXT"
+	})
+
+
+func _setup_autoloads(mod_dir_path: String) -> void:
 	var charm_tracker := _create_autoload(
 		mod_dir_path.plus_file("extensions/charm_tracker.gd"),
 		"DamageMeterCharmTracker"
-	)
-
-	var options_injector := _create_autoload(
-		mod_dir_path.plus_file("ui/options/options_menu_injector.gd"),
-		"DamageMeterOptionsInjector"
 	)
 
 
@@ -52,29 +113,3 @@ func _install_extensions(mod_dir_path: String) -> void:
 	var ui_extensions_dir := mod_dir_path.plus_file("ui/hud")
 	ModLoaderMod.install_script_extension(ui_extensions_dir.plus_file("player_damage_updater.gd"))
 	ModLoaderMod.install_script_extension(ui_extensions_dir.plus_file("main_extension.gd"))
-
-func _ready():
-	# Initialize config for ModLoader (like Trade mod does)
-	_init_config()
-
-func _init_config() -> void:
-	var data = ModLoaderStore.mod_data[MOD_ID]
-	if data == null:
-		return
-
-	var version = data.manifest.version_number
-	ModLoaderLog.info("Current Version is %s" % version, MOD_ID)
-
-	var config = ModLoaderConfig.get_config(MOD_ID, version)
-	if config == null:
-		var default_config = ModLoaderConfig.get_default_config(MOD_ID)
-		if default_config != null:
-			config = ModLoaderConfig.create_config(MOD_ID, version, default_config.data)
-		else:
-			config = ModLoaderConfig.create_config(MOD_ID, version, {})
-
-	if config != null and ModLoaderConfig.get_current_config_name(MOD_ID) != version:
-		ModLoaderConfig.set_current_config(config)
-		if config.is_valid():
-			config.save_to_file()
-			ModLoaderLog.info("Saved config to: %s" % config.save_path, MOD_ID)

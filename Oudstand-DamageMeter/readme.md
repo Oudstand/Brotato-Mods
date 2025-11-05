@@ -20,34 +20,41 @@ A comprehensive damage tracking mod for Brotato that displays real-time damage s
 
 ## Installation
 
-1. Download the latest release
-2. Extract the `Oudstand-DamageMeter` folder to your Brotato mods directory:
-   - Windows: `%APPDATA%\Godot\app_userdata\Brotato\mods-unpacked\`
-   - Linux: `~/.local/share/godot/app_userdata/Brotato/mods-unpacked/`
-3. Launch Brotato and enable the mod in the Mods menu
+Install via Steam Workshop or download from the repository.
+
+**Optional:**
+- **ModOptions** (Oudstand-ModOptions) - Enables in-game configuration UI
+- Without ModOptions, the mod uses default settings and works perfectly fine
+
+## Screenshots
+
+![DamageMeter In-Game](screenshots/damagemeter_ingame.png)
+*Real-time damage tracking showing total damage and top damage sources*
+
+![DamageMeter Configuration](screenshots/damagemeter_config.png)
+*Configuration options in ModOptions menu*
 
 ## Configuration
 
-### With Mod Options (Recommended)
+**With ModOptions (Optional):**
 
-If you have **Mod Options** installed, you can configure all settings in-game:
+If you have ModOptions installed, configure all settings in-game via **Options → Mods → DamageMeter**:
 1. Go to **Options → Mods → DamageMeter**
 2. Adjust settings with sliders and toggles
 3. Changes are saved automatically and persist across game restarts
 4. Changes apply instantly without needing to restart
 
-**Install Mod Options:** [Thunderstore - dami-ModOptions](https://thunderstore.io/c/brotato/p/dami/ModOptions/)
+**Available Settings:**
+- **OPACITY** (0.3-1.0): Transparency of all UI elements (default: 1.0)
+- **NUMBER_OF_SOURCES** (1-25): Number of top damage sources to display (default: 6)
+- **SHOW_ITEM_COUNT**: Show count for grouped items (default: true)
+- **SHOW_DPS**: Show damage per second (default: false)
+- **SHOW_PERCENTAGE**: Show percentage values relative to top player (default: true)
+- **HIDE_DAMAGE_BAR_SOLO**: Hide damage bar when playing solo (default: false)
 
-### Without Mod Options
+**Without ModOptions:**
 
-The mod works perfectly fine without Mod Options using sensible default values. Settings are saved automatically and persist between sessions. Advanced users can manually edit the config file at `%APPDATA%\Godot\app_userdata\Brotato\Oudstand-DamageMeter_config.json`.
-
-**Available Settings (requires Mod Options):**
-- **OPACITY** (0.3-1.0): Transparency of all UI elements
-- **NUMBER_OF_SOURCES** (1-25): Number of top damage sources to display
-- **SHOW_ITEM_COUNT**: Show count for grouped items (e.g. "x5")
-- **SHOW_DPS**: Show damage per second
-- **SHOW_PERCENTAGE**: Show percentage values relative to top player
+The mod works perfectly with default settings shown above. No configuration needed!
 
 ## How It Works
 
@@ -79,12 +86,12 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
   - Player 2: 80% progress bar
 - Bars update dynamically as damage changes
 
-## Optional Dependencies
+## Dependencies
 
-- **Mod Options** (dami-ModOptions): Enables in-game configuration UI
+- **ModOptions** (Oudstand-ModOptions): Optional - Enables in-game configuration UI
   - Without it, the mod uses default values and works fine
   - Recommended for users who want to customize settings
-  - Config persistence works with or without Mod Options installed
+  - Available in this repository
 
 ## Compatibility
 

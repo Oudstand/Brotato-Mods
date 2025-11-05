@@ -7,46 +7,12 @@
     "dependencies": [],
     "extra": {
         "godot": {
-            "optional_dependencies": [],
+            "optional_dependencies": ["Oudstand-ModOptions"],
             "incompatibilities": [],
             "authors": [ "Oudstand" ],
             "tags": [ "damage", "hud", "player", "bar", "weapons", "items" ],
             "compatible_mod_loader_version": [ "6.2.0" ],
-            "compatible_game_version": [ "1.1.12.0" ],
-            "config_defaults": {},
-            "config_schema": {
-                "type": "object",
-                "properties": {
-                    "DAMAGEMETER_OPACITY": {
-                        "type": "number",
-                        "default": 1.0,
-                        "minimum": 0.3,
-                        "maximum": 1.0,
-                        "multipleOf": 0.1,
-                        "format": "%.1f"
-                    },
-                    "DAMAGEMETER_NUMBER_OF_SOURCES": {
-                        "type": "number",
-                        "default": 6.0,
-                        "minimum": 1.0,
-                        "maximum": 25.0,
-                        "multipleOf": 1.0,
-                        "format": "%.0f"
-                    },
-                    "DAMAGEMETER_SHOW_ITEM_COUNT": {
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "DAMAGEMETER_SHOW_DPS": {
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "DAMAGEMETER_SHOW_PERCENTAGE": {
-                        "type": "boolean",
-                        "default": true
-                    }
-                }
-            }
+            "compatible_game_version": [ "1.1.12.0" ]
         }
     }
 }

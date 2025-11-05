@@ -1,114 +1,117 @@
-# DamageMeter for Brotato
+# Brotato Mods Collection by Oudstand
 
-A comprehensive damage tracking mod for Brotato that displays real-time damage statistics for each player, including total damage dealt and the top damage sources (weapons/items).
+A collection of quality-of-life and enhancement mods for Brotato, featuring a powerful configuration framework and useful gameplay tools.
 
-## Features
+## Mods Included
 
-- **Total Damage Display**: Shows each player's total damage as a progress bar, with percentage relative to the highest damage dealer
-- **Top Damage Sources**: Displays the top 6 damage sources (weapons, items, abilities) with their individual damage values
-- **Item Grouping**: Automatically groups identical items (e.g., multiple turrets) and shows the count
-- **Smart Tracking**: Tracks damage from:
-  - All weapons
-  - Damage-dealing items
-  - Spawned entities (turrets from Wrench, landmines from Screwdriver, turrets from Pocket Factory)
-  - Character abilities
-- **Visual Indicators**: 
-  - Item rarity colors (Common, Uncommon, Rare, Legendary)
-  - Cursed item markers (purple flames)
-  - Rounded icon backgrounds
-- **Performance Optimized**: Intelligent caching system for smooth gameplay
+### 🔧 ModOptions
+**A flexible configuration framework for Brotato mods**
 
-## Installation
+ModOptions provides an easy-to-use API for mod developers to add in-game configuration interfaces. All mod settings appear in a unified "Mods" tab in the Options menu, providing a consistent and user-friendly experience.
 
-1. Download the latest release
-2. Extract the `Oudstand-DamageMeter` folder to your Brotato mods directory:
-   - Windows: `%APPDATA%\Godot\app_userdata\Brotato\mods-unpacked\`
-   - Linux: `~/.local/share/godot/app_userdata/Brotato/mods-unpacked/`
-3. Launch Brotato and enable the mod in the Mods menu
+**Key Features:**
+- Unified configuration interface for all mods
+- Rich option types: sliders, toggles, dropdowns, text inputs, item selectors
+- Live configuration updates
+- Automatic setting persistence
+- Simple API for mod developers
+- Full translation support
+
+[📖 Read More](Oudstand-ModOptions/README.md)
+
+---
+
+### 📊 DamageMeter
+**Real-time damage tracking and statistics**
+
+DamageMeter displays comprehensive damage statistics during runs, showing total damage dealt and top damage sources for each player. Perfect for analyzing builds and optimizing strategies.
+
+**Key Features:**
+- Real-time damage tracking with progress bars
+- Top damage sources display (weapons, items, abilities)
+- Tracks spawned entities (turrets, landmines, etc.)
+- Item grouping with rarity indicators
+- Configurable via ModOptions
+- Performance optimized
+
+[📖 Read More](Oudstand-DamageMeter/readme.md)
+
+---
+
+### ⚡ QuickEquip
+**Instantly equip items and weapons during runs**
+
+QuickEquip lets you add or remove weapons and items anytime during a run. Perfect for testing builds, experimenting with equipment, or setting up challenge runs.
+
+**Key Features:**
+- Add/remove equipment during active runs
+- Smart item selection with icons and tier dropdowns
+- Live updates - changes apply immediately
+- Configure quantity and cursed status
+- Clean UI integrated with ModOptions
+- Multilingual (English, German)
+
+[📖 Read More](Oudstand-QuickEquip/README.md)
+
+---
+
+## Screenshots
+
+![ModOptions Interface](screenshots/mods_tab.png)
+*Unified "Mods" tab in Options menu*
+
+![DamageMeter](screenshots/damagemeter_overview.png)
+*DamageMeter showing damage statistics during gameplay*
+
+![QuickEquip](screenshots/quickequip_overview.png)
+*QuickEquip configuration with item selection*
 
 ## Configuration
 
-All settings can be configured by editing constants at the top of `player_damage_updater.gd`:
+All mods can be configured in-game:
+1. Launch Brotato
+2. Go to **Options** (ESC or main menu)
+3. Select **Mods** tab
+4. Configure each mod's settings
 
-```gdscript
-const TOP_K: int = 6                    // Number of top damage sources to display (1-12)
-const SHOW_ITEM_COUNT: bool = true      // Show count for grouped items (e.g. "x5")
-const SHOW_DPS: bool = false            // Show damage per second
-const BAR_OPACITY: float = 1.0          // Transparency (0.3-1.0)
-const UPDATE_INTERVAL: float = 0.1      // Update frequency in seconds (0.05-0.5)
-const ANIMATION_SPEED: float = 6.0      // Bar animation speed (1.0-20.0)
-const MIN_DAMAGE_FILTER: int = 1        // Minimum damage to display (0 = show all)
-const SHOW_PERCENTAGE: bool = true      // Show percentage values
-const COMPACT_MODE: bool = false        // Smaller icons and text
-```
-
-## How It Works
-
-### Damage Tracking
-- **Weapons**: Tracked via `dmg_dealt_last_wave` property
-- **Items**: Tracked via `RunData.tracked_item_effects` for items with `DAMAGE_DEALT` tracking
-- **Spawned Entities**: Automatically detects and tracks damage from:
-  - Engineering turrets (Wrench weapon)
-  - Landmines (Screwdriver weapon)
-  - Pocket Factory turrets
-
-### Grouping System
-Items are grouped by:
-- Item ID
-- Tier (rarity)
-- Cursed status
-
-This means 5 common turrets are grouped together, but a cursed turret appears separately.
-
-### Performance
-- **Source Caching**: The mod caches which items/weapons a player has and only recalculates damage values
-- **Selective Updates**: UI elements only update when their values change
-- **Optimized Arrays**: Uses PoolArrays for better performance
-
-### Display Logic
-- Progress bars are relative to the highest damage dealer (100%)
-- When Player 1 has 100 damage and Player 2 has 80 damage:
-  - Player 1: 100% progress bar
-  - Player 2: 80% progress bar
-- Bars update dynamically as damage changes
+Settings are automatically saved and persist between sessions.
 
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.12.0
-- **Multiplayer**: Supports up to 4 players
+- **Game Version**: 1.1.12.0+
+- **Multiplayer**: Full support (DamageMeter supports up to 4 players)
 
-## Known Issues
+## For Mod Developers
 
-- Config file support is not yet implemented (use constants instead)
-- Some modded items may not be tracked if they don't use standard damage tracking
-
-## Credits
-
-Created by Oudstand
+Want to add configuration to your own mod? See the [ModOptions README](Oudstand-ModOptions/README.md) for full API documentation and examples.
 
 ## License
 
-This mod is provided as-is for the Brotato community. Feel free to modify and share.
+These mods are provided as-is for the Brotato community. Feel free to modify and share.
 
 ## Support
 
-For bugs or feature requests, please create an issue on the project repository.
+For bugs, feature requests, or questions:
+- Create an issue on this repository
+- Check individual mod READMEs for specific documentation
 
 ## Changelog
 
-### v1.1.0
-- Added Pocket Factory support
-- Performance optimizations with intelligent caching
-- Added item count display for grouped items
-- Added DPS display option
-- Added configurable settings
-- Fixed cursed item display bug
-- Added rounded icon corners
-- Improved damage filtering
+### ModOptions v1.0.0
+- Initial release with unified configuration interface
 
-### v1.0.0
-- Initial release
-- Basic damage tracking
-- Top 6 damage sources display
-- Multi-player support
+### DamageMeter v1.2.0
+- Full ModOptions integration
+- Live configuration updates
+- Improved performance
+
+### QuickEquip v1.1.0
+- Renamed from AutoGive
+- Added translation support
+- Smart tier selection
+- Icon-based UI
+
+---
+
+**Enjoy the mods! Happy farming! 🥔**

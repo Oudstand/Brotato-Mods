@@ -1,10 +1,10 @@
 {
-    "name": "AutoGive",
+    "name": "QuickEquip",
     "namespace": "Oudstand",
-    "version_number": "1.0.0",
-    "description": "Gibt automatisch Test-Items beim Start eines Runs",
+    "version_number": "1.1.0",
+    "description": "Quickly equip items and weapons during runs - configurable anytime via Mod Options",
     "website_url": "",
-    "dependencies": [],
+    "dependencies": ["Oudstand-ModOptions"],
     "extra": {
         "godot": {
             "incompatibilities": [],
@@ -12,7 +12,7 @@
             "tags": ["testing", "debug"],
             "compatible_mod_loader_version": ["6.2.0"],
             "compatible_game_version": ["1.1.12.0"],
-            "config_schema": {}
+            "config_defaults": {}
         }
     }
 }

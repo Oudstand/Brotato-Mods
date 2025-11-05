@@ -1,0 +1,74 @@
+[h1]QuickEquip - Instant Equipment Management[/h1]
+
+Quickly equip items and weapons during runs! QuickEquip lets you add or remove equipment anytime - perfect for testing builds, experimenting with loadouts, or setting up challenge runs.
+
+[h2]Features[/h2]
+
+[list]
+[*][b]Instant Equipment[/b] - Add or remove weapons and items during active runs
+[*][b]Live Updates[/b] - All changes apply immediately without restarting
+[*][b]Smart Item Selection[/b] - Deduplicated lists with item icons and separate tier dropdowns
+[*][b]Dynamic Tier Selection[/b] - Only shows available tiers for each item
+[*][b]Full Control[/b] - Set quantity and mark items as cursed
+[*][b]Multilingual[/b] - Built-in English and German translations
+[*][b]Clean UI[/b] - Integrated with ModOptions for consistent interface
+[/list]
+
+[h2]Usage[/h2]
+
+[b]1. Open Options[/b] (ESC) during a run or in the main menu
+[b]2. Go to Mods → Quick Equip[/b]
+[b]3. Configure your equipment:[/b]
+
+[h3]Adding Weapons/Items[/h3]
+[list]
+[*]Click [b]+ Add Weapon[/b] or [b]+ Add Item[/b]
+[*]Select from dropdown with icons
+[*]Choose tier (I, II, III, IV) - only available tiers shown
+[*]Set quantity
+[*]Optionally mark as cursed
+[*]Changes apply immediately if you're in a run!
+[/list]
+
+[h3]Removing Equipment[/h3]
+[list]
+[*]Click the [b]X[/b] button next to any item/weapon
+[*]Equipment removed from inventory instantly
+[/list]
+
+[h2]Smart Features[/h2]
+
+[list]
+[*]Items with minimum tier requirements (e.g., Anchor requires Tier II, Dex Sweater requires Tier IV) automatically filter unavailable tiers
+[*]If an item only exists in one tier, the tier dropdown is hidden
+[*]Equipment list is deduplicated - each item appears once with separate tier selection
+[*]Icons make finding items quick and easy
+[/list]
+
+[h2]Use Cases[/h2]
+
+[list]
+[*][b]Build Testing[/b] - Quickly test weapon and item combinations
+[*][b]Challenge Runs[/b] - Start with specific equipment for custom challenges
+[*][b]Learning[/b] - Experiment with items you haven't unlocked yet
+[*][b]Speed Testing[/b] - Skip shopping and jump straight to testing
+[*][b]Content Creation[/b] - Set up specific builds for videos or screenshots
+[/list]
+
+[h2]Requirements[/h2]
+
+[b]⚠️ Requires ModOptions[/b] - Subscribe to [b]ModOptions[/b] (by Oudstand) for the configuration interface.
+
+[h2]Compatibility[/h2]
+
+[list]
+[*]Mod Loader Version: 6.2.0+
+[*]Game Version: 1.1.12.0+
+[*]Works with vanilla items and weapons
+[/list]
+
+[h2]Support[/h2]
+
+For bugs or feature requests, please visit the GitHub repository or leave a comment below.
+
+[b]Equip fast, experiment more! ⚡[/b]

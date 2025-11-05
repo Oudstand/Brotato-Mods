@@ -10,4 +10,5 @@ DAMAGEMETER_SHOW_DPS,Show DPS,DPS anzeigen
 DAMAGEMETER_SHOW_DPS_LABEL,Show DPS,DPS anzeigen
 DAMAGEMETER_SHOW_PERCENTAGE,Show Percentage,Prozente anzeigen
 DAMAGEMETER_SHOW_PERCENTAGE_LABEL,Show Percentage,Prozente anzeigen
+DAMAGEMETER_HIDE_TOTAL_BAR_SINGLEPLAYER_LABEL,Hide Damage Bar (Solo),Schadensbalken ausblenden (Solo)
 DAMAGEMETER_INFO_TEXT,Configure the Damage Meter display settings. Changes take effect immediately.,Konfiguriere die Damage Meter Anzeigeeinstellungen. Änderungen werden sofort übernommen.

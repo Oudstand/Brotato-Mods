@@ -1,0 +1,62 @@
+[h1]DamageMeter - Real-Time Damage Tracking[/h1]
+
+Track your damage in real-time! DamageMeter displays comprehensive damage statistics during runs, showing total damage dealt and your top damage sources. Perfect for analyzing builds and optimizing strategies.
+
+[h2]Features[/h2]
+
+[list]
+[*][b]Total Damage Display[/b] - Progress bars showing each player's damage with percentages
+[*][b]Top Damage Sources[/b] - See your best weapons, items, and abilities ranked by damage
+[*][b]Item Grouping[/b] - Automatically groups identical items (e.g., multiple turrets)
+[*][b]Smart Tracking[/b] - Tracks weapons, items, spawned entities (turrets, landmines), and abilities
+[*][b]Visual Indicators[/b] - Rarity colors, cursed markers, item icons with rounded backgrounds
+[*][b]Performance Optimized[/b] - Intelligent caching for smooth gameplay
+[*][b]Fully Configurable[/b] - Customize opacity, number of sources, DPS display, and more
+[/list]
+
+[h2]What Gets Tracked?[/h2]
+
+[list]
+[*]All weapons and their damage output
+[*]Damage-dealing items
+[*]Spawned entities (Engineering turrets, Screwdriver landmines, Pocket Factory turrets)
+[*]Character abilities
+[/list]
+
+[h2]Configuration[/h2]
+
+[b]With ModOptions (Optional):[/b]
+
+If you have ModOptions installed, configure all settings in-game via [b]Options → Mods → DamageMeter[/b]:
+[list]
+[*][b]Opacity[/b] - Adjust UI transparency (0.3-1.0, default: 1.0)
+[*][b]Number of Sources[/b] - Show 1-25 top damage sources (default: 6)
+[*][b]Show Item Count[/b] - Display count for grouped items (default: on)
+[*][b]Show DPS[/b] - Display damage per second (default: off)
+[*][b]Show Percentage[/b] - Show percentage values relative to top player (default: on)
+[*][b]Hide Damage Bar (Solo)[/b] - Hide total damage bar when playing solo (default: off)
+[/list]
+
+All changes apply instantly without restarting!
+
+[b]Without ModOptions:[/b]
+
+The mod works perfectly with default settings (shown above). No configuration needed!
+
+[h2]Optional Enhancement[/h2]
+
+[b]ModOptions[/b] (by Oudstand) - Adds in-game configuration UI for customizing settings. The mod works great without it using sensible defaults!
+
+[h2]Compatibility[/h2]
+
+[list]
+[*]Mod Loader Version: 6.2.0+
+[*]Game Version: 1.1.12.0+
+[*]Multiplayer: Supports up to 4 players
+[/list]
+
+[h2]Support[/h2]
+
+For bugs or feature requests, please visit the GitHub repository or leave a comment below.
+
+[b]Analyze your builds and dominate! 📊[/b]

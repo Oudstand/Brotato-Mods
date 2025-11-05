@@ -1,15 +1,28 @@
 extends Node
-# Injects the Damage Meter options tab into Brotato's options menu
 
-const MOD_NAME := "DamageMeter"
+const MOD_NAME := "ModOptions"
 const OPTIONS_MENU_SCRIPT := "res://ui/menus/pages/menu_options.gd"
+const MENU_BUTTON_SCRIPT := "res://ui/menus/global/my_menu_button.gd"
 
-const damage_meter_tab_scene := preload("res://mods-unpacked/Oudstand-DamageMeter/ui/options/damage_meter_options_tab.tscn")
+const OptionsTabFactory := preload("res://mods-unpacked/Oudstand-ModOptions/ui/options_tab_factory.gd")
 
 var injected_menus := []
+var factory_instance = null
+
+
+# Get ModOptions manager reference
+func _get_mod_options() -> Node:
+	# Get sibling mod node (both are children of ModLoader)
+	var parent = get_parent()
+	if not parent:
+		return null
+	return parent.get_node_or_null("ModOptions")
 
 
 func _ready() -> void:
+	factory_instance = OptionsTabFactory.new()
+	# Set ModOptions reference in factory
+	factory_instance.mod_options = _get_mod_options()
 	call_deferred("_setup_menu_monitor")
 
 
@@ -19,7 +32,7 @@ func _setup_menu_monitor() -> void:
 
 func _on_node_added(node: Node) -> void:
 	if _is_options_menu(node) and not injected_menus.has(node):
-		_inject_damage_meter_tab(node)
+		_inject_mod_options_tabs(node)
 
 
 func _is_options_menu(node: Node) -> bool:
@@ -28,7 +41,8 @@ func _is_options_menu(node: Node) -> bool:
 	var script = node.get_script()
 	return script != null and script.resource_path == OPTIONS_MENU_SCRIPT
 
-func _inject_damage_meter_tab(menu_options: MarginContainer) -> void:
+
+func _inject_mod_options_tabs(menu_options: MarginContainer) -> void:
 	injected_menus.append(menu_options)
 	yield(get_tree().create_timer(0.1), "timeout")
 
@@ -39,10 +53,27 @@ func _inject_damage_meter_tab(menu_options: MarginContainer) -> void:
 	if not _validate_containers(button_container, tab_container):
 		return
 
-	var button = _create_tab_button()
+	# Get all registered mods
+	var mod_options = _get_mod_options()
+	if not mod_options:
+		ModLoaderLog.error("ModOptions manager not found", MOD_NAME)
+		return
+
+	var registered_mods = mod_options.get_registered_mods()
+	if registered_mods.empty():
+		return
+
+	# Create a single "Mod Options" tab containing all mod options
+	_inject_unified_mod_options_tab(button_container, tab_container, tab_script_node, registered_mods)
+
+
+func _inject_unified_mod_options_tab(button_container: Node, tab_container: Node, tab_script_node: Node, registered_mods: Array) -> void:
+	# Create single button for "Mod Options"
+	var button = _create_unified_tab_button()
 	button_container.add_child(button)
 
-	var tab_instance = _create_tab_instance()
+	# Create tab instance containing all mod options
+	var tab_instance = _create_unified_tab_instance(registered_mods)
 	tab_container.add_child(tab_instance)
 
 	_register_button_with_tab_system(button, tab_script_node)
@@ -58,24 +89,24 @@ func _validate_containers(button_container: Node, tab_container: Node) -> bool:
 	return true
 
 
-func _create_tab_button() -> Button:
+func _create_unified_tab_button() -> Button:
 	var button = Button.new()
-	button.name = "DamageMeter_but"
-	button.text = "DAMAGEMETER_TAB_TITLE"
+	button.name = "ModOptions_but"
+	button.text = "Mods"
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	button.toggle_mode = true
 
-	var button_script = load("res://ui/menus/global/my_menu_button.gd")
+	var button_script = load(MENU_BUTTON_SCRIPT)
 	if button_script:
 		button.set_script(button_script)
 
 	return button
 
 
-func _create_tab_instance() -> Control:
-	var instance = damage_meter_tab_scene.instance()
-	instance.name = "DamageMeter_Container"
+func _create_unified_tab_instance(registered_mods: Array) -> Control:
+	var instance = factory_instance.create_unified_options_tab(registered_mods)
+	instance.name = "ModOptions_Container"
 	instance.visible = false
 	return instance
 

@@ -1,9 +1,8 @@
 extends "res://ui/hud/ui_wave_timer.gd"
 
 # === SETTINGS ===
-# Config is managed by ConfigManager singleton (config_manager.gd)
-# - With Mod Options: Configure in-game via Options → Mods → DamageMeter
-# - Without Mod Options: Edit user://Oudstand-DamageMeter_config.json
+# Config is managed by ModOptions
+# Configure in-game via Options → Damage Meter
 # ================
 
 const MOD_NAME: String = "DamageMeter"
@@ -14,13 +13,13 @@ const ANIMATION_SPEED: float = 6.0
 const MIN_DAMAGE_FILTER: int = 1
 const COMPACT_MODE: bool = false
 
-# Config values (loaded from ConfigManager singleton)
-var _config_manager = null
+# Config values (loaded from ModOptions)
 var TOP_K: int = 6
-var SHOW_ITEM_COUNT: bool = false
+var SHOW_ITEM_COUNT: bool = true
 var SHOW_DPS: bool = false
 var BAR_OPACITY: float = 1.0
 var SHOW_PERCENTAGE: bool = true
+var HIDE_TOTAL_BAR_SINGLEPLAYER: bool = false
 
 onready var _hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
 
@@ -49,19 +48,36 @@ static func _create_signature(sources: Array) -> String:
 		parts.append("%s:%d:%d" % [key, dmg, cnt])
 	return parts.join("|")
 
-func _load_config_from_manager() -> void:
-	if not is_instance_valid(_config_manager):
+func _get_mod_options() -> Node:
+	# Try to find ModOptions via ModLoader parent structure
+	# Extended script nodes are in scene tree, we can navigate up
+	var root = get_tree().get_root()
+	if not root:
+		return null
+	var mod_loader = root.get_node_or_null("ModLoader")
+	if not mod_loader:
+		return null
+	var mod_options_mod = mod_loader.get_node_or_null("Oudstand-ModOptions")
+	if not mod_options_mod:
+		return null
+	return mod_options_mod.get_node_or_null("ModOptions")
+
+func _load_config() -> void:
+	var mod_options = _get_mod_options()
+	if not mod_options:
+		ModLoaderLog.warning("ModOptions not found, using defaults", MOD_NAME)
 		return
 
-	TOP_K = _config_manager.TOP_K
-	SHOW_ITEM_COUNT = _config_manager.SHOW_ITEM_COUNT
-	SHOW_DPS = _config_manager.SHOW_DPS
-	BAR_OPACITY = _config_manager.BAR_OPACITY
-	SHOW_PERCENTAGE = _config_manager.SHOW_PERCENTAGE
+	TOP_K = int(mod_options.get_value("DamageMeter", "top_k"))
+	SHOW_ITEM_COUNT = mod_options.get_value("DamageMeter", "show_item_count")
+	SHOW_DPS = mod_options.get_value("DamageMeter", "show_dps")
+	BAR_OPACITY = mod_options.get_value("DamageMeter", "opacity")
+	SHOW_PERCENTAGE = mod_options.get_value("DamageMeter", "show_percentage")
+	HIDE_TOTAL_BAR_SINGLEPLAYER = mod_options.get_value("DamageMeter", "hide_total_bar_singleplayer")
 
-func _on_config_changed() -> void:
-	# Reload config from manager
-	_load_config_from_manager()
+func _on_config_changed(_mod_id: String, _option_id: String, _new_value) -> void:
+	# Reload config from ModOptions
+	_load_config()
 
 	# Update displays
 	for display in active_displays:
@@ -72,21 +88,13 @@ func _on_config_changed() -> void:
 	_invalidate_all_caches()
 
 func _ready() -> void:
-	# Get ConfigManager singleton
-	var mod_loader = get_node_or_null("/root/ModLoader")
-	if is_instance_valid(mod_loader):
-		var damage_meter_mod = mod_loader.get_node_or_null("Oudstand-DamageMeter")
-		if is_instance_valid(damage_meter_mod):
-			_config_manager = damage_meter_mod.get_node_or_null("DamageMeterConfig")
-			if is_instance_valid(_config_manager):
-				_load_config_from_manager()
-				_config_manager.connect("config_changed", self, "_on_config_changed")
-			else:
-				ModLoaderLog.warning("ConfigManager not found", MOD_NAME)
-		else:
-			ModLoaderLog.warning("DamageMeter mod node not found", MOD_NAME)
-	else:
-		ModLoaderLog.warning("ModLoader not found", MOD_NAME)
+	# Load config from ModOptions
+	_load_config()
+
+	# Connect to config changes
+	var mod_options = _get_mod_options()
+	if mod_options:
+		mod_options.connect("config_changed", self, "_on_config_changed")
 
 	var player_count: int = RunData.get_player_count()
 
@@ -511,31 +519,37 @@ func _update_damage_bars() -> void:
 			dps_values[i] = int(float(totals[i]) / elapsed)
 	
 	var show_percentage_ui = SHOW_PERCENTAGE and player_count > 1
+	var hide_total_bar = HIDE_TOTAL_BAR_SINGLEPLAYER and player_count == 1
 
 	for i in range(player_count):
 		if i >= active_displays.size() or not is_instance_valid(active_displays[i]):
 			continue
-		
+
 		var display = active_displays[i]
 		display.visible = true
 		display._target_alpha = BAR_OPACITY
-		
+
+		# Hide total damage bar in singleplayer if option is enabled
+		var total_bar = display.get_node_or_null("TotalDamageBar")
+		if is_instance_valid(total_bar):
+			total_bar.visible = not hide_total_bar
+
 		var total = totals[i]
 		var dps = dps_values[i] if SHOW_DPS else 0
 		var top_sources = _get_top_sources(i)
 		var signature = _create_signature(top_sources)
-		
+
 		var total_changed = _prev_totals[i] != total
 		var sig_changed = _prev_sigs[i] != signature
-		
+
 		var character = RunData.get_player_character(i)
 		var icon = character.icon if is_instance_valid(character) and "icon" in character else null
 
 		display.update_total_damage(
-			total, 
-			percentages[i], 
-			max_total, 
-			icon, 
+			total,
+			percentages[i],
+			max_total,
+			icon,
 			i,
 			SHOW_DPS,
 			dps,

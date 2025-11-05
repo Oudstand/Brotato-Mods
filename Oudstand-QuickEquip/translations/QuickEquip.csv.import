@@ -1,0 +1,16 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+
+[deps]
+
+files=[ "res://mods-unpacked/Oudstand-QuickEquip/translations/QuickEquip.en.translation", "res://mods-unpacked/Oudstand-QuickEquip/translations/QuickEquip.de.translation" ]
+
+source_file="res://mods-unpacked/Oudstand-QuickEquip/translations/QuickEquip.csv"
+dest_files=[ "res://mods-unpacked/Oudstand-QuickEquip/translations/QuickEquip.en.translation", "res://mods-unpacked/Oudstand-QuickEquip/translations/QuickEquip.de.translation" ]
+
+[params]
+
+compress=true
+delimiter=0

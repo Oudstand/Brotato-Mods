@@ -1,0 +1,51 @@
+[h1]ModOptions - Configuration Framework[/h1]
+
+A powerful and flexible configuration framework for Brotato mods. ModOptions provides an easy-to-use API for mod developers to add in-game configuration interfaces, with all mod settings unified in one convenient "Mods" tab.
+
+[h2]Features[/h2]
+
+[b]For Players:[/b]
+[list]
+[*][b]Unified Interface[/b] - All mod configurations in one "Mods" tab in Options
+[*][b]Live Updates[/b] - Most changes apply immediately without restarting
+[*][b]Persistent Settings[/b] - All settings automatically saved and restored
+[*][b]User-Friendly[/b] - Clean, consistent interface for all mod settings
+[/list]
+
+[b]For Mod Developers:[/b]
+[list]
+[*][b]Simple API[/b] - Register options with just a few lines of code
+[*][b]Rich Option Types[/b] - Sliders, toggles, dropdowns, text inputs, item selectors
+[*][b]Zero Boilerplate[/b] - No UI code needed - just define your options
+[*][b]Automatic Persistence[/b] - Settings saved and loaded automatically
+[*][b]Translation Support[/b] - Full internationalization support
+[/list]
+
+[h2]Usage[/h2]
+
+After installing, go to [b]Options → Mods[/b] to configure all your installed mods in one place!
+
+[h2]For Mod Developers[/h2]
+
+Want to add configuration to your mod? Check the documentation in the GitHub repository for full API reference and examples.
+
+[h2]Compatibility[/h2]
+
+[list]
+[*]Mod Loader Version: 6.2.0+
+[*]Game Version: 1.1.12.0+
+[*]Works with all properly configured mods
+[/list]
+
+[h2]Mods Using ModOptions[/h2]
+
+[list]
+[*]DamageMeter - Real-time damage tracking
+[*]QuickEquip - Instant equipment management
+[/list]
+
+[h2]Support[/h2]
+
+For bugs or feature requests, please visit the GitHub repository or leave a comment below.
+
+[b]Enjoy the unified configuration experience! 🔧[/b]
