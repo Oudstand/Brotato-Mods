@@ -1,9 +1,0 @@
-keys,en,de
-QUICKEQUIP_WEAPONS_LABEL,Weapons,Waffen
-QUICKEQUIP_ITEMS_LABEL,Items,Items
-QUICKEQUIP_ADD_WEAPON,+ Add Weapon,+ Waffe hinzufügen
-QUICKEQUIP_ADD_ITEM,+ Add Item,+ Item hinzufügen
-QUICKEQUIP_CURSED,Cursed,Verflucht
-QUICKEQUIP_WEAPONS_HELP,Select weapons from the dropdown and set count and cursed status. Changes apply immediately during runs.,Wähle Waffen aus dem Dropdown und setze Anzahl und Verfluchungs-Status. Änderungen werden sofort während des Runs übernommen.
-QUICKEQUIP_ITEMS_HELP,Select items from the dropdown and set count and cursed status. Changes apply immediately during runs.,Wähle Items aus dem Dropdown und setze Anzahl und Verfluchungs-Status. Änderungen werden sofort während des Runs übernommen.
-QUICKEQUIP_INFO_TEXT,Quickly equip items and weapons during runs. Add or remove equipment anytime - changes take effect immediately.,Rüste Items und Waffen während des Runs schnell aus. Füge Ausrüstung jederzeit hinzu oder entferne sie - Änderungen werden sofort übernommen.
