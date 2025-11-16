@@ -86,6 +86,15 @@ Settings are automatically saved and persist between sessions.
 
 Want to add configuration to your own mod? See the [ModOptions README](Oudstand-ModOptions/README.md) for full API documentation and examples.
 
+## ☕ Support this project
+
+This project is developed and maintained in my free time.  
+If you enjoy the mods or find them useful, you can support the development:
+
+[![PayPal](https://img.shields.io/badge/PayPal-Buy%20me%20a%20coffee-blue.svg?style=for-the-badge)](https://paypal.me/oudstand)
+
+Thank you for supporting open source! 💙
+
 ## License
 
 These mods are provided as-is for the Brotato community. Feel free to modify and share.
