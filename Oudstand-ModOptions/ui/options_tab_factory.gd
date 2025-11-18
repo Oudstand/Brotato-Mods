@@ -10,6 +10,10 @@ const MENU_BUTTON_SCRIPT := "res://ui/menus/global/my_menu_button.gd"
 # Reference to ModOptions manager (set by injector)
 var mod_options: Node = null
 
+# Track controls with conditional visibility
+# {mod_id: {condition_option_id: [controls that depend on it]}}
+var _visibility_controls := {}
+
 
 # Create a unified options tab containing all registered mods
 # Returns a ScrollContainer with all mods' options
@@ -46,6 +50,10 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 
 		# Add mod options
 		for option in config.options:
+			# Skip hidden options (ones with empty labels)
+			if not option.has("label") or option.label == "":
+				continue
+
 			var control: Node = null
 
 			match option.type:
@@ -62,6 +70,10 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 
 			if control:
 				vbox.add_child(control)
+
+				# Handle conditional visibility
+				if option.has("visible_if"):
+					_setup_conditional_visibility(control, mod_id, option)
 
 		# Add info text if present
 		if config.has("info_text"):
@@ -123,6 +135,10 @@ func create_options_tab(mod_id: String, config: Dictionary) -> ScrollContainer:
 
 	# Create controls for each option
 	for option in config.options:
+		# Skip hidden options (ones with empty labels)
+		if not option.has("label") or option.label == "":
+			continue
+
 		var control: Node = null
 
 		match option.type:
@@ -386,6 +402,9 @@ func _create_item_selector_option(mod_id: String, option: Dictionary) -> Node:
 	var add_button := Button.new()
 	var option_item_type = option.get("item_type", "item")
 
+	# Set a unique name for the button so we can find it later (for focus management)
+	add_button.name = "AddItemButton_%s_%s" % [mod_id, option.id]
+
 	# Check if mod provided custom button text (translation key)
 	if option.has("add_button_text"):
 		add_button.text = tr(option.add_button_text)
@@ -453,6 +472,12 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 			selected_item_index = i
 	item_dropdown.selected = selected_item_index
 	item_dropdown.connect("item_selected", self, "_on_item_dropdown_changed", [container, mod_id, option, row])
+
+	# Connect FocusEmulator signals for keyboard/controller navigation
+	var popup = item_dropdown.get_popup()
+	if popup:
+		popup.connect("index_pressed", self, "_on_item_dropdown_index_pressed", [item_dropdown])
+
 	row.add_child(item_dropdown)
 
 	# Dropdown for tier selection (only shown if multiple tiers available)
@@ -477,6 +502,12 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 		tier_dropdown.visible = false
 
 	tier_dropdown.connect("item_selected", self, "_on_item_row_changed", [container, mod_id, option])
+
+	# Connect FocusEmulator signals for keyboard/controller navigation
+	var tier_popup = tier_dropdown.get_popup()
+	if tier_popup:
+		tier_popup.connect("index_pressed", self, "_on_tier_dropdown_index_pressed", [tier_dropdown])
+
 	row.add_child(tier_dropdown)
 
 	# Count input
@@ -719,11 +750,107 @@ func _on_add_item_pressed(container: VBoxContainer, mod_id: String, option: Dict
 	_save_item_selector_value(container, mod_id, option)
 
 
-# Handle remove item button press
 func _on_remove_item_pressed(row: HBoxContainer, container: VBoxContainer, mod_id: String, option: Dictionary) -> void:
+	var next_focusable = _find_next_focusable_element(row, container)
+
+	var viewport = row.get_viewport()
+	if viewport:
+		var focus_emulators = _find_focus_emulators_recursive(viewport)
+
+		for emulator in focus_emulators:
+			if not is_instance_valid(emulator):
+				continue
+
+			var focused = emulator.focused_control
+			if not is_instance_valid(focused):
+				continue
+
+			if focused == row or row.is_a_parent_of(focused):
+				if next_focusable != null:
+					if emulator.has_method("_set_focused_control_with_style"):
+						emulator.call("_set_focused_control_with_style", next_focusable, false)
+				else:
+					if emulator.has_method("_clear_focused_control"):
+						emulator.call("_clear_focused_control")
+
 	container.remove_child(row)
 	row.queue_free()
 	_save_item_selector_value(container, mod_id, option)
+
+
+func _find_next_focusable_element(row_to_delete: Control, container: VBoxContainer) -> Control:
+	var all_rows = container.get_children()
+	var current_index = all_rows.find(row_to_delete)
+
+	var target_row = null
+	if current_index + 1 < all_rows.size():
+		target_row = all_rows[current_index + 1]
+	elif current_index - 1 >= 0:
+		target_row = all_rows[current_index - 1]
+
+	if target_row != null:
+		var focusable = _find_focusable_in_tree(target_row)
+		if focusable != null:
+			return focusable
+
+	var add_button = _find_add_button_in_parent(container)
+	if add_button != null:
+		return add_button
+
+	return null
+
+
+# Recursively find all FocusEmulator instances
+func _find_focus_emulators_recursive(node: Node) -> Array:
+	var result = []
+
+	# Check if this node is a FocusEmulator (check class name)
+	if node.get_class() == "FocusEmulator" or (node.has_method("get_class") and node.get_class() == "FocusEmulator"):
+		result.append(node)
+
+	# Recursively search children
+	for child in node.get_children():
+		result.append_array(_find_focus_emulators_recursive(child))
+
+	return result
+
+
+# Find any focusable control in this tree
+func _find_focusable_in_tree(node: Node):
+	if not is_instance_valid(node) or node.is_queued_for_deletion():
+		return null
+	if node is Control and node.focus_mode == Control.FOCUS_ALL and node.is_visible_in_tree():
+		return node
+	for child in node.get_children():
+		var result = _find_focusable_in_tree(child)
+		if result != null:
+			return result
+	return null
+
+
+func _find_add_button_in_parent(container: Node):
+	if not is_instance_valid(container) or container.is_queued_for_deletion():
+		return null
+	var parent = container.get_parent()
+	if parent == null:
+		return null
+
+	return _find_button_recursive(parent, "AddItemButton")
+
+
+# Find button by name pattern
+func _find_button_recursive(node: Node, pattern: String):
+	if node is Button:
+		if node.name.find(pattern) != -1:
+			if node.focus_mode == Control.FOCUS_ALL and node.is_visible_in_tree():
+				return node
+
+	for child in node.get_children():
+		var result = _find_button_recursive(child, pattern)
+		if result != null:
+			return result
+
+	return null
 
 
 # Handle item dropdown change (update tier dropdown when item changes)
@@ -860,3 +987,65 @@ func _update_integer_display(value: float, label: Label) -> void:
 func _on_dropdown_selected(index: int, mod_id: String, option_id: String, choices: Array) -> void:
 	if index >= 0 and index < choices.size() and mod_options:
 		mod_options.set_value(mod_id, option_id, choices[index])
+
+
+# Handle keyboard/controller selection in item dropdown via FocusEmulator
+func _on_item_dropdown_index_pressed(index: int, option_button: OptionButton) -> void:
+	if is_instance_valid(option_button):
+		option_button.emit_signal("item_selected", index)
+
+
+# Handle keyboard/controller selection in tier dropdown via FocusEmulator
+func _on_tier_dropdown_index_pressed(index: int, option_button: OptionButton) -> void:
+	if is_instance_valid(option_button):
+		option_button.emit_signal("item_selected", index)
+
+
+# Setup conditional visibility for an option based on another option's value
+func _setup_conditional_visibility(control: Node, mod_id: String, option: Dictionary) -> void:
+	if not option.has("visible_if") or not mod_options:
+		return
+
+	var condition_option_id = option.visible_if
+
+	# Register this control in the tracking dictionary
+	if not _visibility_controls.has(mod_id):
+		_visibility_controls[mod_id] = {}
+	if not _visibility_controls[mod_id].has(condition_option_id):
+		_visibility_controls[mod_id][condition_option_id] = []
+	_visibility_controls[mod_id][condition_option_id].append(control)
+
+	# Set initial visibility based on current value
+	_update_control_visibility(control, mod_id, condition_option_id)
+
+	# Listen for changes to the condition option (connect once)
+	if mod_options and not mod_options.is_connected("config_changed", self, "_on_visibility_condition_changed"):
+		mod_options.connect("config_changed", self, "_on_visibility_condition_changed")
+
+
+# Called when a config value changes that might affect visibility
+func _on_visibility_condition_changed(changed_mod_id: String, changed_option_id: String, _new_value) -> void:
+	# Update only controls that depend on this specific option
+	if not _visibility_controls.has(changed_mod_id):
+		return
+	if not _visibility_controls[changed_mod_id].has(changed_option_id):
+		return
+
+	var controls = _visibility_controls[changed_mod_id][changed_option_id]
+	for control in controls:
+		if is_instance_valid(control):
+			_update_control_visibility(control, changed_mod_id, changed_option_id)
+
+
+# Update the visibility of a single control based on its condition
+func _update_control_visibility(control: Node, mod_id: String, condition_option_id: String) -> void:
+	if not mod_options or not is_instance_valid(control):
+		return
+
+	var condition_value = mod_options.get_value(mod_id, condition_option_id)
+
+	# Show control if condition is true (for boolean toggles)
+	# For other types, could extend this logic
+	var should_be_visible = bool(condition_value)
+
+	control.visible = should_be_visible

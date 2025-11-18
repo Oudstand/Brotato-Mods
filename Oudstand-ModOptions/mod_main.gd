@@ -7,6 +7,7 @@ const MOD_ID := "Oudstand-ModOptions"
 func _init():
 	var mod_dir_path := ModLoaderMod.get_unpacked_dir().plus_file(MOD_DIR_NAME)
 	_load_translations(mod_dir_path)
+	_install_extensions(mod_dir_path)
 	_setup_autoloads(mod_dir_path)
 
 
@@ -14,6 +15,11 @@ func _load_translations(mod_dir_path: String) -> void:
 	var translations_dir := mod_dir_path.plus_file("translations")
 	ModLoaderMod.add_translation(translations_dir.plus_file("ModOptions.en.translation"))
 	ModLoaderMod.add_translation(translations_dir.plus_file("ModOptions.de.translation"))
+
+
+func _install_extensions(mod_dir_path: String) -> void:
+	var extensions_dir := mod_dir_path.plus_file("extensions")
+	ModLoaderMod.install_script_extension(extensions_dir.plus_file("focus_emulator_extension.gd"))
 
 
 func _setup_autoloads(mod_dir_path: String) -> void:

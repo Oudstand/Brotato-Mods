@@ -3,57 +3,52 @@ extends "res://singletons/run_data.gd"
 # Extension to add QuickEquip items/weapons/abilities BEFORE players spawn
 # This ensures all timers and effects are properly initialized
 
-func add_starting_items_and_weapons() -> void:
-	# First, add the regular starting items from the game
-	.add_starting_items_and_weapons()
+const MOD_ID = "Oudstand-QuickEquip"
 
-	# QuickEquip items are added in on_wave_start() instead
-	# This prevents double-adding items on restart
+# Helper function to get QuickEquip mod instance
+func _get_quickequip_mod() -> Node:
+	var mod_loader = get_node_or_null("/root/ModLoader")
+	if mod_loader:
+		return mod_loader.get_node_or_null(MOD_ID)
+	return null
+
+func add_starting_items_and_weapons() -> void:
+	.add_starting_items_and_weapons()
+	# QuickEquip items are added in on_wave_start() to prevent double-adding on restart
 
 
 func on_wave_start(timer) -> void:
-	# Call the original function
 	.on_wave_start(timer)
 
-	# Add QuickEquip items on Wave 1 (this catches first run from Character Selection)
-	# Keep trying until items are added or wave > 1
 	if current_wave == 1:
-		# Reset the flag at the start of Wave 1 to allow items for new runs
-		var mod_loader = get_node_or_null("/root/ModLoader")
-		if mod_loader:
-			var quick_equip_mod = mod_loader.get_node_or_null("Oudstand-QuickEquip")
-			if quick_equip_mod:
-				quick_equip_mod.set("_items_added_this_run", false)
+		var quick_equip_mod = _get_quickequip_mod()
+		if quick_equip_mod:
+			quick_equip_mod.set("_items_added_this_run", false)
 
 		_add_quickequip_items()
-		# If items weren't added (options not ready), schedule retry
-		if mod_loader:
-			var quick_equip_mod = mod_loader.get_node_or_null("Oudstand-QuickEquip")
-			if quick_equip_mod and not quick_equip_mod.get("_items_added_this_run"):
-				call_deferred("_retry_add_items")
+		quick_equip_mod = _get_quickequip_mod()
+		if quick_equip_mod and not quick_equip_mod.get("_items_added_this_run"):
+			call_deferred("_retry_add_items")
 
 
 func _retry_add_items() -> void:
-	# Retry adding items after a short delay
 	yield(get_tree().create_timer(0.3), "timeout")
 	if current_wave == 1:
 		_add_quickequip_items()
 
 
 func _add_quickequip_items() -> void:
-	# Get the ModOptions node to read QuickEquip configuration
-	var mod_loader = get_node_or_null("/root/ModLoader")
-	if not mod_loader:
-		return
-
-	var quick_equip_mod = mod_loader.get_node_or_null("Oudstand-QuickEquip")
+	var quick_equip_mod = _get_quickequip_mod()
 	if not quick_equip_mod:
 		return
 
-	# Check if items were already added this run (prevent duplicates)
 	if quick_equip_mod.get("_items_added_this_run"):
 		return
 	quick_equip_mod.set("_items_added_this_run", true)
+
+	var mod_loader = get_node_or_null("/root/ModLoader")
+	if not mod_loader:
+		return
 
 	var mod_options_mod = mod_loader.get_node_or_null("Oudstand-ModOptions")
 	if not mod_options_mod:
@@ -69,39 +64,47 @@ func _add_quickequip_items() -> void:
 		quick_equip_mod.set("_items_added_this_run", false)  # Reset flag for retry
 		return
 
-	# Get configured items/weapons/abilities
-	var weapons_to_give = mod_options.get_value("QuickEquip", "weapons_list")
-	var items_to_give = mod_options.get_value("QuickEquip", "items_list")
-	var abilities_to_apply = mod_options.get_value("QuickEquip", "abilities_list")
-
-	# Safety checks - if values are null, options aren't registered yet
-	if weapons_to_give == null:
-		weapons_to_give = []
-	if items_to_give == null:
-		items_to_give = []
-	if abilities_to_apply == null:
-		abilities_to_apply = []
-
-	# Additional type safety checks
-	if not weapons_to_give is Array:
-		weapons_to_give = []
-	if not items_to_give is Array:
-		items_to_give = []
-	if not abilities_to_apply is Array:
-		abilities_to_apply = []
-
-	# If all configs are empty, options probably aren't registered yet
-	if weapons_to_give.empty() and items_to_give.empty() and abilities_to_apply.empty():
-		ModLoaderLog.warning("QuickEquip: No items configured or options not yet registered", "Oudstand-QuickEquip")
-		quick_equip_mod.set("_items_added_this_run", false)  # Reset flag for retry
-		return
-
 	# Get DLC data for curse functionality
 	var dlc_data = null
 	if ProgressData.is_dlc_available_and_active("abyssal_terrors"):
 		dlc_data = ProgressData.get_dlc_data("abyssal_terrors")
 
-	var player_index = 0
+	# Iterate through all 4 players and add items if configured
+	for player_index in range(4):
+		# IMPORTANT: Only process players that actually exist in the current run
+		if player_index >= players_data.size():
+			continue
+
+		var player_num = player_index + 1
+
+		var enabled_value = mod_options.get_value("QuickEquip", "enable_player_%d" % player_num)
+		var player_enabled = enabled_value is bool and enabled_value
+		if not player_enabled:
+			continue
+
+		# Get configured items/weapons/abilities for this player
+		var weapons_to_give = mod_options.get_value("QuickEquip", "player_%d_weapons" % player_num)
+		var items_to_give = mod_options.get_value("QuickEquip", "player_%d_items" % player_num)
+		var abilities_to_apply = mod_options.get_value("QuickEquip", "player_%d_abilities" % player_num)
+
+		# Safety checks
+		if not weapons_to_give is Array:
+			weapons_to_give = []
+		if not items_to_give is Array:
+			items_to_give = []
+		if not abilities_to_apply is Array:
+			abilities_to_apply = []
+
+		# Skip if player has no items configured
+		if weapons_to_give.empty() and items_to_give.empty() and abilities_to_apply.empty():
+			continue
+
+		_add_items_for_player(player_index, weapons_to_give, items_to_give, abilities_to_apply, dlc_data, quick_equip_mod)
+
+	ModLoaderLog.info("QuickEquip: Added items/weapons/abilities at run start (Wave 1)", "Oudstand-QuickEquip")
+
+
+func _add_items_for_player(player_index: int, weapons_to_give: Array, items_to_give: Array, abilities_to_apply: Array, dlc_data, quick_equip_mod) -> void:
 
 	# Add weapons and track them
 	for weapon_config in weapons_to_give:
@@ -129,7 +132,7 @@ func _add_quickequip_items() -> void:
 			# Track the weapon in mod_main
 			# Note: Weapons are automatically equipped when players spawn, no need to call _equip_weapon_on_player
 			if quick_equip_mod.has_method("_track_weapon_instance"):
-				quick_equip_mod._track_weapon_instance(weapon_id, is_cursed, returned_weapon)
+				quick_equip_mod._track_weapon_instance(weapon_id, is_cursed, returned_weapon, player_index)
 
 	# Add items and track them
 	for item_config in items_to_give:
@@ -156,7 +159,7 @@ func _add_quickequip_items() -> void:
 
 			# Track the item in mod_main
 			if quick_equip_mod.has_method("_track_item_instance"):
-				quick_equip_mod._track_item_instance(item_id, is_cursed, item_copy)
+				quick_equip_mod._track_item_instance(item_id, is_cursed, item_copy, player_index)
 
 	# Add character abilities and track them
 	for ability_config in abilities_to_apply:
@@ -177,10 +180,8 @@ func _add_quickequip_items() -> void:
 
 			# Track the ability in mod_main
 			if quick_equip_mod.has_method("_track_character_ability"):
-				quick_equip_mod._track_character_ability(character_id, ability_copy)
+				quick_equip_mod._track_character_ability(character_id, ability_copy, player_index)
 
-	# Update tracking configs in mod_main
+	# Update tracking configs in mod_main for this player
 	if quick_equip_mod.has_method("_update_tracking_configs"):
-		quick_equip_mod._update_tracking_configs(weapons_to_give, items_to_give, abilities_to_apply)
-
-	ModLoaderLog.info("QuickEquip: Added items/weapons/abilities at run start (Wave 1)", "Oudstand-QuickEquip")
+		quick_equip_mod._update_tracking_configs(weapons_to_give, items_to_give, abilities_to_apply, player_index)

@@ -1,8 +1,21 @@
 keys,en,de
-QUICKEQUIP_WEAPONS_LABEL,Weapons,Waffen
-QUICKEQUIP_ITEMS_LABEL,Items,Items
+QUICKEQUIP_ENABLE_PLAYER_1,Enable Player 1,Spieler 1 aktivieren
+QUICKEQUIP_ENABLE_PLAYER_2,Enable Player 2,Spieler 2 aktivieren
+QUICKEQUIP_ENABLE_PLAYER_3,Enable Player 3,Spieler 3 aktivieren
+QUICKEQUIP_ENABLE_PLAYER_4,Enable Player 4,Spieler 4 aktivieren
+QUICKEQUIP_PLAYER_1_WEAPONS,Player 1 Weapons,Spieler 1 Waffen
+QUICKEQUIP_PLAYER_1_ITEMS,Player 1 Items,Spieler 1 Items
+QUICKEQUIP_PLAYER_1_ABILITIES,Player 1 Abilities,Spieler 1 Fähigkeiten
+QUICKEQUIP_PLAYER_2_WEAPONS,Player 2 Weapons,Spieler 2 Waffen
+QUICKEQUIP_PLAYER_2_ITEMS,Player 2 Items,Spieler 2 Items
+QUICKEQUIP_PLAYER_2_ABILITIES,Player 2 Abilities,Spieler 2 Fähigkeiten
+QUICKEQUIP_PLAYER_3_WEAPONS,Player 3 Weapons,Spieler 3 Waffen
+QUICKEQUIP_PLAYER_3_ITEMS,Player 3 Items,Spieler 3 Items
+QUICKEQUIP_PLAYER_3_ABILITIES,Player 3 Abilities,Spieler 3 Fähigkeiten
+QUICKEQUIP_PLAYER_4_WEAPONS,Player 4 Weapons,Spieler 4 Waffen
+QUICKEQUIP_PLAYER_4_ITEMS,Player 4 Items,Spieler 4 Items
+QUICKEQUIP_PLAYER_4_ABILITIES,Player 4 Abilities,Spieler 4 Fähigkeiten
 QUICKEQUIP_WEAPONS_HELP,Select weapons from the dropdown and set count and cursed status.,Wähle Waffen aus dem Dropdown und setze Anzahl und Verfluchungs-Status.
 QUICKEQUIP_ITEMS_HELP,Select items from the dropdown and set count and cursed status.,Wähle Items aus dem Dropdown und setze Anzahl und Verfluchungs-Status.
-QUICKEQUIP_INFO_TEXT,Quickly equip items and weapons during runs. Add or remove equipment anytime - changes take effect immediately.,Rüste Items und Waffen während des Runs schnell aus. Füge Ausrüstung jederzeit hinzu oder entferne sie - Änderungen werden sofort übernommen.
-QUICKEQUIP_ABILITIES_LABEL,Character Abilities,Charakterfähigkeiten
 QUICKEQUIP_ABILITIES_HELP,Combine passive abilities from any characters.,Kombiniere passive Fähigkeiten beliebiger Charaktere.
+QUICKEQUIP_INFO_TEXT,Quickly equip items and weapons during runs. Add or remove equipment anytime - changes take effect immediately.,Rüste Items und Waffen während des Runs schnell aus. Füge Ausrüstung jederzeit hinzu oder entferne sie - Änderungen werden sofort übernommen.

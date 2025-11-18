@@ -58,18 +58,19 @@ func clear_all_given_items(player_index: int) -> void:
 	_remove_all_tracked_weapons(player_index)
 	_remove_all_tracked_items(player_index)
 	_clear_character_abilities(player_index)
-	_tracker.last_weapon_config.clear()
-	_tracker.last_item_config.clear()
-	_tracker.last_ability_config.clear()
+	_tracker.last_weapon_config.erase(player_index)
+	_tracker.last_item_config.erase(player_index)
+	_tracker.last_ability_config.erase(player_index)
 
-	ModLoaderLog.info("Cleared all QuickEquip items", MOD_ID)
+	ModLoaderLog.info("Cleared all QuickEquip items for player %d" % player_index, MOD_ID)
 
 
 # === Sync Logic ===
 
 func _sync_weapons_config(desired_config: Array, dlc_data, player_index: int) -> void:
 	var desired_map = Utils.config_array_to_map(desired_config)
-	var current_map = Utils.config_array_to_map(_tracker.last_weapon_config)
+	var current_config = _tracker.last_weapon_config.get(player_index, [])
+	var current_map = Utils.config_array_to_map(current_config)
 
 	# Remove weapons that are no longer in config
 	for key in current_map.keys():
@@ -92,12 +93,13 @@ func _sync_weapons_config(desired_config: Array, dlc_data, player_index: int) ->
 			var entry = desired_map[key]
 			_add_weapon_instances(entry.id, entry.cursed, to_add, dlc_data, player_index)
 
-	_tracker.last_weapon_config = Utils.deep_copy_config(desired_config)
+	_tracker.last_weapon_config[player_index] = Utils.deep_copy_config(desired_config)
 
 
 func _sync_items_config(desired_config: Array, dlc_data, player_index: int) -> void:
 	var desired_map = Utils.config_array_to_map(desired_config)
-	var current_map = Utils.config_array_to_map(_tracker.last_item_config)
+	var current_config = _tracker.last_item_config.get(player_index, [])
+	var current_map = Utils.config_array_to_map(current_config)
 
 	# Remove items that are no longer in config
 	for key in current_map.keys():
@@ -120,7 +122,7 @@ func _sync_items_config(desired_config: Array, dlc_data, player_index: int) -> v
 			var entry = desired_map[key]
 			_add_item_instances(entry.id, entry.cursed, to_add, dlc_data, player_index)
 
-	_tracker.last_item_config = Utils.deep_copy_config(desired_config)
+	_tracker.last_item_config[player_index] = Utils.deep_copy_config(desired_config)
 
 
 func _sync_character_abilities(desired_config: Array, player_index: int) -> void:
@@ -129,7 +131,8 @@ func _sync_character_abilities(desired_config: Array, player_index: int) -> void
 		return
 
 	var desired_map = Utils.config_array_to_map(desired_config, false)
-	var current_map = Utils.config_array_to_map(_tracker.last_ability_config, false)
+	var current_config = _tracker.last_ability_config.get(player_index, [])
+	var current_map = Utils.config_array_to_map(current_config, false)
 
 	# Remove abilities that are no longer in config
 	for key in current_map.keys():
@@ -151,7 +154,7 @@ func _sync_character_abilities(desired_config: Array, player_index: int) -> void
 		if to_add > 0:
 			_add_character_abilities(key, to_add, player_index)
 
-	_tracker.last_ability_config = Utils.deep_copy_config(desired_config)
+	_tracker.last_ability_config[player_index] = Utils.deep_copy_config(desired_config)
 
 
 # === Add Logic ===
@@ -159,6 +162,12 @@ func _sync_character_abilities(desired_config: Array, player_index: int) -> void
 func _add_weapon_instances(weapon_id: String, is_cursed: bool, count: int, dlc_data, player_index: int) -> void:
 	if count <= 0:
 		return
+
+	# Safety check: Don't add weapons if player index is invalid
+	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
+		ModLoaderLog.warning("Cannot add weapon - invalid player_index %d (player_count: %d)" % [player_index, RunData.get_player_count() if is_instance_valid(RunData) else -1], MOD_ID)
+		return
+
 	var base_weapon = Utils.get_weapon_template(weapon_id)
 	if base_weapon == null:
 		ModLoaderLog.error("Weapon not found in ItemService.weapons: %s" % weapon_id, MOD_ID)
@@ -175,11 +184,16 @@ func _add_weapon_instances(weapon_id: String, is_cursed: bool, count: int, dlc_d
 		var returned_weapon = RunData.add_weapon(weapon, player_index)
 		if _owner_node:
 			Utils.equip_weapon_on_player(_owner_node.get_tree(), returned_weapon, player_index)
-		_tracker.track_weapon_instance(weapon_id, is_cursed, returned_weapon)
+		_tracker.track_weapon_instance(weapon_id, is_cursed, returned_weapon, player_index)
 
 
 func _add_item_instances(item_id: String, is_cursed: bool, count: int, dlc_data, player_index: int) -> void:
 	if count <= 0:
+		return
+
+	# Safety check: Don't add items if player index is invalid
+	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
+		ModLoaderLog.warning("Cannot add item - invalid player_index %d (player_count: %d)" % [player_index, RunData.get_player_count() if is_instance_valid(RunData) else -1], MOD_ID)
 		return
 
 	var item = ItemService.get_element(ItemService.items, item_id)
@@ -196,11 +210,16 @@ func _add_item_instances(item_id: String, is_cursed: bool, count: int, dlc_data,
 			item_copy.is_cursed = is_cursed
 
 		RunData.add_item(item_copy, player_index)
-		_tracker.track_item_instance(item_id, is_cursed, item_copy)
+		_tracker.track_item_instance(item_id, is_cursed, item_copy, player_index)
 
 
 func _add_character_abilities(character_id: String, count: int, player_index: int) -> void:
 	if count <= 0:
+		return
+
+	# Safety check: Don't add abilities if player index is invalid
+	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
+		ModLoaderLog.warning("Cannot add ability - invalid player_index %d (player_count: %d)" % [player_index, RunData.get_player_count() if is_instance_valid(RunData) else -1], MOD_ID)
 		return
 
 	var character_data = ItemService.get_element(ItemService.characters, character_id)
@@ -211,100 +230,112 @@ func _add_character_abilities(character_id: String, count: int, player_index: in
 	for _i in range(count):
 		var ability_copy = character_data.duplicate()
 		RunData.add_item(ability_copy, player_index)
-		_tracker.track_character_ability(character_id, ability_copy)
+		_tracker.track_character_ability(character_id, ability_copy, player_index)
 
 
 # === Remove Logic ===
 
 func _remove_tracked_weapons(key: String, count: int, player_index: int) -> void:
-	if count <= 0 or not _tracker.given_weapons.has(key):
+	if count <= 0:
+		return
+	if not _tracker.given_weapons.has(player_index) or not _tracker.given_weapons[player_index].has(key):
 		return
 	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
-		_tracker.given_weapons.erase(key)
+		_tracker.given_weapons[player_index].erase(key)
 		return
 
-	var weapon_list: Array = _tracker.given_weapons[key]
+	var weapon_list: Array = _tracker.given_weapons[player_index][key]
 	for _i in range(min(count, weapon_list.size())):
 		var weapon_data = weapon_list.pop_back()
 		_remove_weapon_resource(weapon_data, player_index)
 
 	if weapon_list.empty():
-		_tracker.given_weapons.erase(key)
+		_tracker.given_weapons[player_index].erase(key)
 	else:
-		_tracker.given_weapons[key] = weapon_list
+		_tracker.given_weapons[player_index][key] = weapon_list
 
 
 func _remove_tracked_items(key: String, count: int, player_index: int) -> void:
-	if count <= 0 or not _tracker.given_items.has(key):
+	if count <= 0:
+		return
+	if not _tracker.given_items.has(player_index) or not _tracker.given_items[player_index].has(key):
 		return
 	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
-		_tracker.given_items.erase(key)
+		_tracker.given_items[player_index].erase(key)
 		return
 
-	var item_list: Array = _tracker.given_items[key]
+	var item_list: Array = _tracker.given_items[player_index][key]
 	for _i in range(min(count, item_list.size())):
 		var item_data = item_list.pop_back()
 		if is_instance_valid(item_data):
 			RunData.remove_item(item_data, player_index)
 
 	if item_list.empty():
-		_tracker.given_items.erase(key)
+		_tracker.given_items[player_index].erase(key)
 	else:
-		_tracker.given_items[key] = item_list
+		_tracker.given_items[player_index][key] = item_list
 
 
 func _remove_character_abilities(key: String, count: int, player_index: int) -> void:
-	if count <= 0 or not _tracker.applied_character_abilities.has(key):
+	if count <= 0:
+		return
+	if not _tracker.applied_character_abilities.has(player_index) or not _tracker.applied_character_abilities[player_index].has(key):
 		return
 	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
-		_tracker.applied_character_abilities.erase(key)
+		_tracker.applied_character_abilities[player_index].erase(key)
 		return
 
-	var ability_list: Array = _tracker.applied_character_abilities[key]
+	var ability_list: Array = _tracker.applied_character_abilities[player_index][key]
 	for _i in range(min(count, ability_list.size())):
 		var ability_resource = ability_list.pop_back()
 		if is_instance_valid(ability_resource):
 			RunData.remove_item(ability_resource, player_index, true)
 
 	if ability_list.empty():
-		_tracker.applied_character_abilities.erase(key)
+		_tracker.applied_character_abilities[player_index].erase(key)
 	else:
-		_tracker.applied_character_abilities[key] = ability_list
+		_tracker.applied_character_abilities[player_index][key] = ability_list
 
 
 func _remove_all_tracked_weapons(player_index: int) -> void:
-	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
-		_tracker.given_weapons.clear()
+	if not _tracker.given_weapons.has(player_index):
 		return
-	for key in _tracker.given_weapons.keys():
-		_remove_tracked_weapons(key, _tracker.given_weapons[key].size(), player_index)
-	_tracker.given_weapons.clear()
+	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
+		_tracker.given_weapons.erase(player_index)
+		return
+	for key in _tracker.given_weapons[player_index].keys():
+		_remove_tracked_weapons(key, _tracker.given_weapons[player_index][key].size(), player_index)
+	_tracker.given_weapons.erase(player_index)
 
 
 func _remove_all_tracked_items(player_index: int) -> void:
-	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
-		_tracker.given_items.clear()
+	if not _tracker.given_items.has(player_index):
 		return
-	for key in _tracker.given_items.keys():
-		_remove_tracked_items(key, _tracker.given_items[key].size(), player_index)
-	_tracker.given_items.clear()
+	if not is_instance_valid(RunData) or RunData.get_player_count() <= player_index:
+		_tracker.given_items.erase(player_index)
+		return
+	for key in _tracker.given_items[player_index].keys():
+		_remove_tracked_items(key, _tracker.given_items[player_index][key].size(), player_index)
+	_tracker.given_items.erase(player_index)
 
 
 func _clear_character_abilities(player_index: int) -> void:
-	if _tracker.applied_character_abilities.empty():
+	if not _tracker.applied_character_abilities.has(player_index):
+		return
+	if _tracker.applied_character_abilities[player_index].empty():
 		return
 
 	var can_remove = is_instance_valid(RunData) and RunData.get_player_count() > player_index
 
 	if not can_remove:
-		_tracker.applied_character_abilities.clear()
+		_tracker.applied_character_abilities.erase(player_index)
 		return
 
-	var keys = _tracker.applied_character_abilities.keys()
+	var keys = _tracker.applied_character_abilities[player_index].keys()
 	for key in keys:
-		_remove_character_abilities(key, _tracker.applied_character_abilities[key].size(), player_index)
+		_remove_character_abilities(key, _tracker.applied_character_abilities[player_index][key].size(), player_index)
 
-	_tracker.applied_character_abilities.clear()
+	_tracker.applied_character_abilities.erase(player_index)
 
 
 func _remove_weapon_resource(weapon_data: WeaponData, player_index: int) -> void:
