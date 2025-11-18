@@ -27,7 +27,7 @@ const ROW_HEIGHT_COMPACT: int = 32
 const ICON_SIZE_NORMAL: int = 40
 const ICON_SIZE_COMPACT: int = 32
 const SEPARATION: int = 4
-const MAX_SOURCES: int = 12
+const MAX_SOURCES: int = 25
 
 func _ready() -> void:
 	progress_bar.value = 0.0
