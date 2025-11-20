@@ -24,10 +24,13 @@ Install via Steam Workshop or download from the repository.
 
 ## Screenshots
 
-![ModOptions Interface](screenshots/modoptions_ui_damage_meter.png)
+![ModOptions Interface DamageMeter](screenshots/modoptions_ui_damage_meter.png)
 *Unified "Mods" tab showing configuration options for Damage Meter mod*
 
-![ModOptions Interface](screenshots/modoptions_ui_quick_equip.png)
+![ModOptions Interface QuickEquip](screenshots/modoptions_ui_quick_equip.png)
+*Unified "Mods" tab showing configuration options for Quick Equip mod*
+
+![ModOptions Interface QuickEquip](screenshots/modoptions_ui_quick_equip_characters.png.png.png)
 *Unified "Mods" tab showing configuration options for Quick Equip mod*
 
 ## For Mod Developers

@@ -30,11 +30,17 @@ Install via Steam Workshop or download from the repository.
 ![QuickEquip Configuration](screenshots/quickequip_ui.png)
 *Item and weapon selection with icons, tier dropdowns, and quantity controls*
 
+![QuickEquip Character Selection and Multiplayer Support](screenshots/quickequip_characters_multiplayer.png)
+*Select characters and enable more players*
+
 ![QuickEquip In-Game](screenshots/quickequip_select_weapon.png)
 *Picking a weapon from the dropdown*
 
 ![QuickEquip In-Game](screenshots/quickequip_select_item.png)
 *Picking an item from the dropdown*
+
+![QuickEquip Character Selection](screenshots/quickequip_character_selection.png)
+*Picking a character from the dropdown*
 
 ## Usage
 
