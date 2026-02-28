@@ -1,10 +1,10 @@
-extends Node
+extends Resource
 
 # Resources used for creating UI elements
-const SLIDER_SCENE := "res://ui/menus/global/slider_option.tscn"
-const FONT_PATH := "res://resources/fonts/actual/base/font_40_outline.tres"
-const BUTTON_HOVER_STYLE := "res://resources/themes/button_styles/button_hover.tres"
-const MENU_BUTTON_SCRIPT := "res://ui/menus/global/my_menu_button.gd"
+const SLIDER_SCENE := preload("res://ui/menus/global/slider_option.tscn")
+const FONT := preload("res://resources/fonts/actual/base/font_40_outline.tres")
+const BUTTON_HOVER_STYLE := preload("res://resources/themes/button_styles/button_hover.tres")
+const MENU_BUTTON_SCRIPT := preload("res://ui/menus/global/my_menu_button.gd")
 
 
 # Reference to ModOptions manager (set by injector)
@@ -14,10 +14,25 @@ var mod_options: Node = null
 # {mod_id: {condition_option_id: [controls that depend on it]}}
 var _visibility_controls := {}
 
+## TODO: _add_mod_header should add a button to a sidebar where you can select a header to jump to
+# Test for controller compatability
+
 
 # Create a unified options tab containing all registered mods
 # Returns a ScrollContainer with all mods' options
-func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
+func create_unified_options_tab(registered_mods: Array) -> HBoxContainer:
+	var sidebar_scroll_container := ScrollContainer.new()
+	sidebar_scroll_container.name = "ModOptions_SidebarContainer"
+	sidebar_scroll_container.anchor_right = 1.0
+	sidebar_scroll_container.anchor_bottom = 1.0
+	sidebar_scroll_container.margin_top = 20.0
+	sidebar_scroll_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar_scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sidebar_scroll_container.follow_focus = true
+	sidebar_scroll_container.scroll_horizontal_enabled = false
+	
+	
+	
 	var scroll_container := ScrollContainer.new()
 	scroll_container.name = "ModOptions_Container"
 	scroll_container.anchor_right = 1.0
@@ -26,7 +41,15 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 	scroll_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll_container.follow_focus = true
+	scroll_container.rect_min_size.x = 1000
+	scroll_container.size_flags_stretch_ratio = 4
 	scroll_container.scroll_horizontal_enabled = false
+
+	var hbox := HBoxContainer.new()
+	hbox.name = "ModOptionsRootContainer"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hbox.set("custom_constants/separation", 15)
 
 	var vbox := VBoxContainer.new()
 	vbox.name = "ModOptionsContainer"
@@ -35,18 +58,29 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 	vbox.set("custom_constants/separation", 15)
 	vbox.alignment = BoxContainer.ALIGN_CENTER
 
+	
+	var header_sidebar_selector := VBoxContainer.new()
+	header_sidebar_selector.rect_min_size.x = 250
+	header_sidebar_selector.name = "HeaderSidebar"
+	vbox.set("custom_constants/separation", 15)
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+
+	hbox.add_child(header_sidebar_selector)
+	hbox.add_child(scroll_container)
 	scroll_container.add_child(vbox)
 
 	# Add options for each mod with separators
 	for i in range(registered_mods.size()):
 		var mod_id = registered_mods[i]
+		
 		var config = mod_options.get_mod_config(mod_id) if mod_options else {}
 
 		if config.empty():
 			continue
 
 		# Add mod header
-		_add_mod_header(vbox, config.tab_title)
+		_add_mod_header(vbox, config.tab_title, header_sidebar_selector)
 
 		# Add mod options
 		for option in config.options:
@@ -83,12 +117,12 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 			info_label.valign = Label.VALIGN_CENTER
 			info_label.autowrap = true
 			info_label.modulate = Color(0.6, 0.6, 0.6)
+			
 			# Set font size to 24
-			var font: DynamicFont = load(FONT_PATH)
-			if font:
-				var custom_font = font.duplicate()
-				custom_font.size = 24
-				info_label.set("custom_fonts/font", custom_font)
+			var custom_font = FONT.duplicate()
+			custom_font.size = 24
+			info_label.set("custom_fonts/font", custom_font)
+			
 			vbox.add_child(info_label)
 
 		# Add separator between mods (except after last one)
@@ -97,83 +131,105 @@ func create_unified_options_tab(registered_mods: Array) -> ScrollContainer:
 			separator.set("custom_constants/separation", 30)
 			vbox.add_child(separator)
 
-	return scroll_container
+
+	if header_sidebar_selector.get_child_count() <= 1:
+		header_sidebar_selector.hide()
+	
+	return hbox
 
 
 # Add a mod name header
-func _add_mod_header(vbox: VBoxContainer, title: String) -> void:
+func _add_mod_header(vbox: VBoxContainer, title: String, header_sidebar_selector :VBoxContainer) -> void:
 	var header := Label.new()
 	header.text = title
 	header.align = Label.ALIGN_CENTER
-	var font: DynamicFont = load(FONT_PATH)
-	if font:
-		header.set("custom_fonts/font", font)
 	vbox.add_child(header)
+	
+	
+	
+	var sidebar_button := MyMenuButton.new()
+	sidebar_button.text = title
+	header_sidebar_selector.add_child(sidebar_button)
+	
+	sidebar_button.clip_text = true
+	
+	var custom_font = FONT.duplicate()
+	custom_font.size = 24
+	sidebar_button.set("custom_fonts/font", custom_font)
+
+	# Load and apply resources
+	sidebar_button.connect("pressed", self, "_on_header_button_pressed", [header])
+
+
+func _on_header_button_pressed(header:Label):
+	if header.get_parent().get_child_count() > header.get_index()+1:
+		var node_to_focus := header.get_parent().get_child(header.get_index() + 1)
+		while \
+				(node_to_focus is Label) or \
+				(node_to_focus.has_meta("focus_action") and node_to_focus.get_meta("focus_action") == "goto_next"):
+			if node_to_focus.get_parent().get_child_count() > node_to_focus.get_index()+1:
+				node_to_focus = node_to_focus.get_parent().get_child(node_to_focus.get_index() + 1)
+			else:
+				# Nothing after this label to select??
+				return
+		
+		
+		if node_to_focus.has_meta("focus_node"):
+			node_to_focus.get_meta("focus_node").grab_focus()
+		
+		else:
+			node_to_focus.grab_focus()
+
 
 
 # Create a slider control
-func _create_slider_option(mod_id: String, option: Dictionary) -> Node:
-	var slider_scene: PackedScene = load(SLIDER_SCENE)
-	if not slider_scene:
-		ModLoaderLog.error("ModOptions: Failed to load slider scene", "ModOptions")
-		return null
-
-	var slider_instance := slider_scene.instance()
+func _create_slider_option(mod_id: String, option: Dictionary) -> SliderOption:
+	var slider_instance :SliderOption= SLIDER_SCENE.instance()
 	slider_instance.name = "%sSlider" % option.id.capitalize().replace(" ", "")
 	slider_instance.unique_name_in_owner = true
 
 	# Configure label
 	var label: Label = slider_instance.get_node("Label")
-	if label:
-		label.text = option.label
+	label.text = option.label
 
 	# Configure slider
 	var hslider: HSlider = slider_instance.get_node("HSlider")
-	if hslider:
-		hslider.min_value = option.min
-		hslider.max_value = option.max
-		hslider.step = option.step
+	hslider.min_value = option.min
+	hslider.max_value = option.max
+	hslider.step = option.step
 
-		if mod_options:
-			# Set initial value first
-			hslider.value = mod_options.get_value(mod_id, option.id)
-			# Connect to ModOptions - use wrapper function to fix parameter order
-			hslider.connect("value_changed", self, "_on_slider_value_changed", [mod_id, option.id])
+	if mod_options:
+		# Set initial value first
+		hslider.value = mod_options.get_value(mod_id, option.id)
+		# Connect to ModOptions - use wrapper function to fix parameter order
+		hslider.connect("value_changed", self, "_on_slider_value_changed", [mod_id, option.id])
 
-		# Handle integer display - override the % formatting
-		if option.get("display_as_integer", false):
-			var value_label: Label = slider_instance.get_node_or_null("Value")
-			if value_label:
-				# Disconnect the SliderOption's internal signal to prevent % formatting
-				hslider.disconnect("value_changed", slider_instance, "_on_HSlider_value_changed")
-				# Connect our own handler that updates the label without %
-				hslider.connect("value_changed", self, "_update_integer_display", [value_label])
-				# Set initial text to integer format (deferred to override SliderOption's _ready)
-				value_label.call_deferred("set_text", str(int(hslider.value)))
+	# Handle integer display - override the % formatting
+	if option.get("display_as_integer", false):
+		var value_label: Label = slider_instance.get_node_or_null("Value")
+		if value_label:
+			# Disconnect the SliderOption's internal signal to prevent % formatting
+			hslider.disconnect("value_changed", slider_instance, "_on_HSlider_value_changed")
+			# Connect our own handler that updates the label without %
+			hslider.connect("value_changed", self, "_update_integer_display", [value_label])
+			# Set initial text to integer format (deferred to override SliderOption's _ready)
+			value_label.call_deferred("set_text", str(int(hslider.value)))
 
+	slider_instance.set_meta("focus_node", hslider)
 	return slider_instance
 
 
 # Create a toggle (CheckButton) control
-func _create_toggle_option(mod_id: String, option: Dictionary) -> Node:
+func _create_toggle_option(mod_id: String, option: Dictionary) -> CheckButton:
 	var check_button := CheckButton.new()
 	check_button.name = "%sButton" % option.id.capitalize().replace(" ", "")
 	check_button.unique_name_in_owner = true
 
 	# Load and apply resources
-	var font: DynamicFont = load(FONT_PATH)
-	if font:
-		check_button.set("custom_fonts/font", font)
-
-	var hover_style: StyleBox = load(BUTTON_HOVER_STYLE)
-	if hover_style:
-		check_button.set("custom_styles/hover_pressed", hover_style)
 
 	# Apply menu button script for sound effects
-	var menu_script: Script = load(MENU_BUTTON_SCRIPT)
-	if menu_script:
-		check_button.script = menu_script
-
+	check_button.script = MENU_BUTTON_SCRIPT
+	check_button.set("custom_styles/hover_pressed", BUTTON_HOVER_STYLE)
 	check_button.text = option.label
 
 	if mod_options:
@@ -192,18 +248,14 @@ func _create_dropdown_option(mod_id: String, option: Dictionary) -> Node:
 
 	# Label
 	var label := Label.new()
-	var font: DynamicFont = load(FONT_PATH)
-	if font:
-		label.set("custom_fonts/font", font)
 	label.text = option.label
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(label)
 
 	# OptionButton
 	var option_button := OptionButton.new()
-	option_button.unique_name_in_owner = true
-	if font:
-		option_button.set("custom_fonts/font", font)
+	option_button.clip_text = true
+	option_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	# Add choices
 	var current_value = mod_options.get_value(mod_id, option.id) if mod_options else option.get("default", null)
@@ -221,6 +273,7 @@ func _create_dropdown_option(mod_id: String, option: Dictionary) -> Node:
 		option_button.connect("item_selected", self, "_on_dropdown_selected", [mod_id, option.id, option.choices])
 
 	hbox.add_child(option_button)
+	hbox.set_meta("focus_node", option_button)
 	return hbox
 
 
@@ -229,12 +282,10 @@ func _create_text_option(mod_id: String, option: Dictionary) -> Node:
 	var vbox_container := VBoxContainer.new()
 	vbox_container.name = "%sContainer" % option.id.capitalize().replace(" ", "")
 	vbox_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox_container.set_meta("focus_action", "goto_next")
 
 	# Label
 	var label := Label.new()
-	var font: DynamicFont = load(FONT_PATH)
-	if font:
-		label.set("custom_fonts/font", font)
 	label.text = option.label
 	vbox_container.add_child(label)
 
@@ -247,8 +298,6 @@ func _create_text_option(mod_id: String, option: Dictionary) -> Node:
 		text_edit.unique_name_in_owner = true
 		text_edit.rect_min_size = Vector2(0, option.get("min_height", 100))
 		text_edit.wrap_enabled = true
-		if font:
-			text_edit.set("custom_fonts/font", font)
 
 		if mod_options:
 			text_edit.text = str(mod_options.get_value(mod_id, option.id))
@@ -258,8 +307,6 @@ func _create_text_option(mod_id: String, option: Dictionary) -> Node:
 	else:
 		var line_edit := LineEdit.new()
 		line_edit.unique_name_in_owner = true
-		if font:
-			line_edit.set("custom_fonts/font", font)
 
 		if mod_options:
 			line_edit.text = str(mod_options.get_value(mod_id, option.id))
@@ -275,11 +322,12 @@ func _create_text_option(mod_id: String, option: Dictionary) -> Node:
 		help_label.text = option.help_text
 		help_label.modulate = Color(0.7, 0.7, 0.7)
 		help_label.autowrap = true
+		
 		# Set font size to 30
-		if font:
-			var custom_font = font.duplicate()
-			custom_font.size = 30
-			help_label.set("custom_fonts/font", custom_font)
+		var custom_font = FONT.duplicate()
+		custom_font.size = 30
+		help_label.set("custom_fonts/font", custom_font)
+		
 		vbox_container.add_child(help_label)
 
 	return vbox_container
@@ -294,9 +342,6 @@ func _create_item_selector_option(mod_id: String, option: Dictionary) -> Node:
 
 	# Label
 	var label := Label.new()
-	var font: DynamicFont = load(FONT_PATH)
-	if font:
-		label.set("custom_fonts/font", font)
 	label.text = option.label
 	main_vbox.add_child(label)
 
@@ -351,8 +396,6 @@ func _create_item_selector_option(mod_id: String, option: Dictionary) -> Node:
 			_:
 				add_button.text = tr("MODOPTIONS_ADD_ITEM")
 
-	if font:
-		add_button.set("custom_fonts/font", font)
 	add_button.connect("pressed", self, "_on_add_item_pressed", [items_container, mod_id, option])
 	main_vbox.add_child(add_button)
 
@@ -362,13 +405,16 @@ func _create_item_selector_option(mod_id: String, option: Dictionary) -> Node:
 		help_label.text = tr(option.help_text)
 		help_label.modulate = Color(0.7, 0.7, 0.7)
 		help_label.autowrap = true
+		
 		# Set font size to 30
-		if font:
-			var custom_font = font.duplicate()
-			custom_font.size = 30
-			help_label.set("custom_fonts/font", custom_font)
+		var custom_font = FONT.duplicate()
+		custom_font.size = 30
+		help_label.set("custom_fonts/font", custom_font)
+		
 		main_vbox.add_child(help_label)
 
+
+	main_vbox.set_meta("focus_node", add_button)
 	return main_vbox
 
 
@@ -377,8 +423,6 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	var row := HBoxContainer.new()
 	row.set("custom_constants/separation", 10)
 
-	var font: DynamicFont = load(FONT_PATH)
-
 	# Get unique base items
 	var item_type = option.get("item_type", "item")
 	var unique_items = _get_unique_base_items(item_type)
@@ -386,8 +430,8 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	# Dropdown for weapon/item selection (deduplicated)
 	var item_dropdown := OptionButton.new()
 	item_dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if font:
-		item_dropdown.set("custom_fonts/font", font)
+	item_dropdown.clip_text = true
+	item_dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	# Populate dropdown with unique items and icons
 	var selected_item_index = 0
@@ -416,8 +460,8 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	# Dropdown for tier selection (only shown if multiple tiers available)
 	var tier_dropdown := OptionButton.new()
 	tier_dropdown.rect_min_size.x = 80
-	if font:
-		tier_dropdown.set("custom_fonts/font", font)
+	tier_dropdown.clip_text = true
+	tier_dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	# Get the currently selected item's base name
 	var current_base_name = ""
@@ -450,8 +494,6 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	count_spinbox.step = 1
 	count_spinbox.value = item_data.get("count", 1)
 	count_spinbox.rect_min_size = Vector2(80, 0)
-	if font:
-		count_spinbox.get_line_edit().set("custom_fonts/font", font)
 	count_spinbox.connect("value_changed", self, "_on_item_row_changed", [container, mod_id, option])
 	var show_count = option.get("show_count", true)
 	count_spinbox.editable = show_count
@@ -468,8 +510,6 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	else:
 		cursed_check.text = tr("MODOPTIONS_CURSED")
 	cursed_check.pressed = item_data.get("cursed", false)
-	if font:
-		cursed_check.set("custom_fonts/font", font)
 	cursed_check.connect("toggled", self, "_on_item_row_changed", [container, mod_id, option])
 	var show_cursed = option.get("show_cursed", true)
 	cursed_check.disabled = not show_cursed
@@ -481,8 +521,6 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	# Remove button
 	var remove_button := Button.new()
 	remove_button.text = "X"
-	if font:
-		remove_button.set("custom_fonts/font", font)
 	remove_button.connect("pressed", self, "_on_remove_item_pressed", [row, container, mod_id, option])
 	row.add_child(remove_button)
 
