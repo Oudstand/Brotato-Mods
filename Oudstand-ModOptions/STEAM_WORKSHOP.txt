@@ -22,15 +22,12 @@ A powerful and flexible configuration framework for Brotato mods. ModOptions pro
 [/list]
 
 [h2]Usage[/h2]
-
 After installing, go to [b]Options → Mods[/b] to configure all your installed mods in one place!
 
 [h2]For Mod Developers[/h2]
-
 Want to add configuration to your mod? Check the documentation in the [url=https://github.com/Oudstand/Brotato-Mods/tree/main/Oudstand-ModOptions]GitHub repository[/url] for full API reference and examples.
 
 [h2]Compatibility[/h2]
-
 [list]
 [*]Mod Loader Version: 6.2.0+
 [*]Game Version: 1.1.12.0+
@@ -38,14 +35,18 @@ Want to add configuration to your mod? Check the documentation in the [url=https
 [/list]
 
 [h2]Mods Using ModOptions[/h2]
-
 [list]
 [*]DamageMeter - Real-time damage tracking
 [*]QuickEquip - Instant equipment management
 [/list]
 
-[h2]Support[/h2]
+[h2]Credits[/h2]
+[list]
+[*] [b]Oudstand[/b] — Creator and maintainer
+[*] [b]L10nM4st3r[/b] — Performance improvements, native Mods tab integration, sidebar navigation, controller support ([url=https://github.com/Oudstand/Brotato-Mods/pull/2]PR #2[/url])
+[/list]
 
+[h2]Support[/h2]
 For bugs or feature requests, please visit the GitHub repository or leave a comment below.
 
 [b]Enjoy the unified configuration experience! 🔧[/b]
