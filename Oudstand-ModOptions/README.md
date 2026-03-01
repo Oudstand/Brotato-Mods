@@ -5,12 +5,14 @@ A powerful and flexible configuration framework for Brotato mods. ModOptions pro
 ## Features
 
 ### For Players
+
 - **Unified Interface**: All mod configurations in one convenient "Mods" tab in Options
 - **Live Updates**: Most configuration changes apply immediately without restarting
 - **Persistent Settings**: All settings are automatically saved and restored
 - **User-Friendly**: Clean, consistent interface for all mod settings
 
 ### For Mod Developers
+
 - **Simple API**: Register your mod's options with just a few lines of code
 - **Rich Option Types**: Sliders, toggles, dropdowns, text inputs, and custom item selectors
 - **Zero Boilerplate**: No UI code needed - just define your options
@@ -25,29 +27,34 @@ Install via [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/
 ## Screenshots
 
 ![ModOptions Interface DamageMeter](screenshots/modoptions_ui_damage_meter.png)
-*Unified "Mods" tab showing configuration options for Damage Meter mod*
+_Unified "Mods" tab showing configuration options for Damage Meter mod_
 
 ![ModOptions Interface QuickEquip](screenshots/modoptions_ui_quick_equip.png)
-*Unified "Mods" tab showing configuration options for Quick Equip mod*
+_Unified "Mods" tab showing configuration options for Quick Equip mod_
 
 ![ModOptions Interface QuickEquip](screenshots/modoptions_ui_quick_equip_characters.png)
-*Unified "Mods" tab showing configuration options for Quick Equip mod*
+_Unified "Mods" tab showing configuration options for Quick Equip mod_
+
+![ModOptions Sidebar](screenshots/modoptions_ui_sidebar.png)
+_Sidebar navigation for multiple mods_
 
 ## For Mod Developers
 
 ### Quick Start
 
 1. Add `Oudstand-ModOptions` as a dependency in your `manifest.json`:
+
 ```json
 {
-  "name": "YourMod",
-  "namespace": "YourName",
-  "version_number": "1.0.0",
-  "dependencies": ["Oudstand-ModOptions"]
+    "name": "YourMod",
+    "namespace": "YourName",
+    "version_number": "1.0.0",
+    "dependencies": ["Oudstand-ModOptions"]
 }
 ```
 
 2. Register your options in your mod's `_ready()` function:
+
 ```gdscript
 func _ready():
     var ModOptionsAPI = get_node("/root/ModLoader/Oudstand-ModOptions/ModOptionsAPI")
@@ -77,6 +84,7 @@ func _ready():
 ```
 
 3. Access your settings:
+
 ```gdscript
 # Get a value
 var damage = ModOptionsAPI.get_value("YourModID", "damage_multiplier")
@@ -92,6 +100,7 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ### Supported Option Types
 
 #### Slider
+
 ```gdscript
 {
     "type": "slider",
@@ -106,6 +115,7 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ```
 
 #### Toggle (Checkbox)
+
 ```gdscript
 {
     "type": "toggle",
@@ -116,6 +126,7 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ```
 
 #### Dropdown
+
 ```gdscript
 {
     "type": "dropdown",
@@ -127,6 +138,7 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ```
 
 #### Text Input
+
 ```gdscript
 {
     "type": "text",
@@ -140,6 +152,7 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ```
 
 #### Item Selector (Advanced)
+
 ```gdscript
 {
     "type": "item_selector",
@@ -154,29 +167,38 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 ### API Reference
 
 #### Registration
+
 ```gdscript
 ModOptionsAPI.register_mod_options(mod_id: String, config: Dictionary)
 ```
+
 - `mod_id`: Unique identifier for your mod
 - `config`: Configuration dictionary with `tab_title`, `options`, and optional `info_text`
 
 #### Getting Values
+
 ```gdscript
 ModOptionsAPI.get_value(mod_id: String, option_id: String) -> Variant
 ```
+
 Returns the current value of an option, or its default if not set.
 
 #### Setting Values
+
 ```gdscript
 ModOptionsAPI.set_value(mod_id: String, option_id: String, value: Variant)
 ```
+
 Updates an option value and emits `config_changed` signal.
 
 #### Signals
+
 ```gdscript
 config_manager.connect("config_changed", target, method)
 ```
+
 Called when any option value changes:
+
 - `mod_id: String` - The mod identifier
 - `option_id: String` - The option identifier
 - `new_value: Variant` - The new value
@@ -199,6 +221,7 @@ Then add your translations using `ModLoaderMod.add_translation()` in your mod's 
 ## Examples
 
 See these mods for real-world examples:
+
 - **DamageMeter** - Uses sliders and toggles for display configuration
 - **QuickEquip** - Uses the advanced item_selector type for weapon/item selection
 
@@ -209,7 +232,8 @@ See these mods for real-world examples:
 
 ## Credits
 
-Created by Oudstand
+- **Oudstand** — Creator and maintainer
+- **L10nM4st3r** — Performance improvements, native Mods tab integration, sidebar navigation, controller support
 
 ## License
 
@@ -221,7 +245,16 @@ For bugs or feature requests, please create an issue on the project repository.
 
 ## Changelog
 
+### v1.1.0
+
+- Controller support: Mods tab now fully integrated with bumper/shoulder button navigation
+- Sidebar: Quick navigation between mod settings when multiple mods are installed
+- Performance: Settings injection no longer affects gameplay performance
+- Compatibility: Updated for Paws & Claws
+- _Contributed by L10nM4st3r_
+
 ### v1.0.0
+
 - Initial release
 - Unified "Mods" tab for all mod configurations
 - Support for slider, toggle, dropdown, text, and item_selector option types
