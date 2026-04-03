@@ -30,6 +30,8 @@ var all_display_containers: Array = []
 var wave_start_item_damages: Dictionary = {}
 var wave_start_time: float = 0.0
 
+var _wave_finished: bool = false # Tracks if the wave end snapshot has been taken
+
 var _prev_totals: Array = []
 var _prev_sigs: Array = []
 
@@ -520,10 +522,21 @@ func _physics_process(delta: float) -> void:
 		_update_accumulator -= UPDATE_INTERVAL
 		_update_damage_bars()
 
+# Executed exactly when the scene change starts and the HUD is being destroyed
+func _exit_tree() -> void:
+	if not _wave_finished:
+		_wave_finished = true
+		_save_final_data()
+
 func _update_damage_bars() -> void:
 	var wave_active = is_instance_valid(wave_timer) and wave_timer.time_left > 0.0
 	
 	if not wave_active:
+		# Save final wave data exactly once when the wave ends
+		if not _wave_finished:
+			_wave_finished = true
+			_save_final_data()
+
 		for display in active_displays:
 			if is_instance_valid(display):
 				display._target_alpha = 0.0
@@ -611,3 +624,56 @@ func _update_damage_bars() -> void:
 		
 		if total_changed:
 			_prev_totals[i] = total
+
+# Safely read a property from either a Dictionary or an Object
+static func _safe_get_prop(source, key: String, default = null):
+	if typeof(source) == TYPE_DICTIONARY:
+		return source.get(key, default)
+	elif is_instance_valid(source) and key in source:
+		return source[key]
+	return default
+
+# Save decoupled values for the shop summary UI
+func _save_final_data() -> void:
+	var player_count = active_displays.size()
+	var final_data = []
+	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
+
+	for i in range(player_count):
+		var all_sources = _collect_grouped_sources(i)
+		all_sources.sort_custom(self, "_cmp_desc_by_damage")
+
+		var total = 0
+		var safe_sources = []
+
+		for group in all_sources:
+			total += group.damage
+
+			var source = group.source
+			safe_sources.append({
+				"damage": group.damage,
+				"count": group.count,
+				"icon": _safe_get_prop(source, "icon"),
+				"name": _safe_get_prop(source, "name", ""),
+				"tier": _safe_get_prop(source, "tier", 0),
+				"is_cursed": _safe_get_prop(source, "is_cursed", false)
+			})
+
+		var dps = int(float(total) / elapsed) if elapsed > 0.1 else 0
+
+		var character = RunData.get_player_character(i)
+		var player_icon = character.icon if is_instance_valid(character) and "icon" in character else null
+		var player_name = character.name if is_instance_valid(character) and "name" in character else ""
+
+		final_data.append({
+			"player_index": i,
+			"player_icon": player_icon,
+			"player_name": player_name,
+			"total": total,
+			"dps": dps,
+			"sources": safe_sources
+		})
+
+	var data_tracker = get_node_or_null("/root/ModLoader/Oudstand-DamageMeter/DamageMeterData")
+	if is_instance_valid(data_tracker):
+		data_tracker.last_wave_data = final_data
