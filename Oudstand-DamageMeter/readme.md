@@ -55,7 +55,7 @@ If you have ModOptions installed, configure all settings in-game via **Options â
 - **SHOW_DPS**: Show damage per second (default: false)
 - **SHOW_PERCENTAGE**: Show percentage values relative to top player (default: true)
 - **HIDE_DAMAGE_BAR_SOLO**: Hide damage bar when playing solo (default: false)
-- **SHOW_WAVE_SUMMARY**: Show summary button in the shop (default: true)
+- **SHOW_WAVE_SUMMARY**: Show wave summary button in the shop (default: true)
 - **AUTO_OPEN_WAVE_SUMMARY**: Automatically open the summary in the shop (default: false)
 
 **Without ModOptions:**
@@ -95,6 +95,7 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
 ### Wave Summary
 - After each wave, damage data is saved and shown in the shop summary popup
 - Includes total damage, DPS, and ranked top sources for each player
+- Open it via the icon button next to reroll, or enable auto-open in settings
 - In co-op, each player can navigate their own column with their own input device
 
 ## Dependencies

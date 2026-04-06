@@ -13,7 +13,7 @@ DAMAGEMETER_SHOW_PERCENTAGE_LABEL,Show Percentage,Prozente anzeigen
 DAMAGEMETER_HIDE_TOTAL_BAR_SINGLEPLAYER_LABEL,Hide Damage Bar (Solo),Schadensbalken ausblenden (Solo)
 DAMAGEMETER_INFO_TEXT,Configure the Damage Meter display settings. Changes take effect immediately.,Konfiguriere die Damage Meter Anzeigeeinstellungen. Änderungen werden sofort übernommen.
 DAMAGEMETER_UNGROUP_WEAPONS_LABEL,Ungroup Weapons,Waffen einzeln anzeigen
-DAMAGEMETER_SHOW_WAVE_SUMMARY_LABEL,Show Wave Summary (Shop),Zeige Wellen-Zusammenfassung (Shop)
-DAMAGEMETER_AUTO_OPEN_WAVE_SUMMARY_LABEL,Auto-open Wave Summary,Wellen-Zusammenfassung automatisch öffnen
+DAMAGEMETER_SHOW_WAVE_SUMMARY_LABEL,Show Damage Stats Button (Shop),Schadensstatistiken-Button anzeigen (Shop)
+DAMAGEMETER_AUTO_OPEN_WAVE_SUMMARY_LABEL,Auto-open Damage Stats,Schadensstatistiken automatisch öffnen
 DAMAGEMETER_SUMMARY_BTN,Stats,Statistiken
-DAMAGEMETER_SUMMARY_TITLE,Wave Summary,Zusammenfassung der Welle
+DAMAGEMETER_SUMMARY_TITLE,Damage Stats,Schadensstatistiken
