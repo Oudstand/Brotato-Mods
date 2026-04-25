@@ -6,7 +6,7 @@ A comprehensive damage tracking mod for Brotato that displays real-time damage s
 
 - **Total Damage Display**: Shows each player's total damage as a progress bar, with percentage relative to the highest damage dealer
 - **Top Damage Sources**: Displays the top 6 damage sources (weapons, items, abilities) with their individual damage values
-- **Wave Summary Screen**: View a full post-wave breakdown in the shop with per-player totals, DPS, and top sources
+- **Damage Stats Screen**: View a full post-wave breakdown in the shop with per-player totals, DPS, and top sources
 - **Item Grouping**: Automatically groups identical items (e.g., multiple turrets) and shows the count
 - **Smart Tracking**: Tracks damage from:
   - All weapons
@@ -35,8 +35,8 @@ Install via [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/
 ![DamageMeter Configuration](screenshots/damagemeter_config.png)
 *Configuration options in ModOptions menu*
 
-![DamageMeter Wave Summary](screenshots/damagemeter_summary.png)
-*Post-wave summary screen in the shop with full damage breakdown*
+![DamageMeter Damage Stats](screenshots/damagemeter_summary.png)
+*Post-wave damage stats screen in the shop with full damage breakdown*
 
 ## Configuration
 
@@ -55,8 +55,8 @@ If you have ModOptions installed, configure all settings in-game via **Options â
 - **SHOW_DPS**: Show damage per second (default: false)
 - **SHOW_PERCENTAGE**: Show percentage values relative to top player (default: true)
 - **HIDE_DAMAGE_BAR_SOLO**: Hide damage bar when playing solo (default: false)
-- **SHOW_WAVE_SUMMARY**: Show wave summary button in the shop (default: true)
-- **AUTO_OPEN_WAVE_SUMMARY**: Automatically open the summary in the shop (default: false)
+- **SHOW_WAVE_SUMMARY**: Show damage stats button in the shop (default: true)
+- **AUTO_OPEN_WAVE_SUMMARY**: Automatically open damage stats in the shop (default: false)
 
 **Without ModOptions:**
 
@@ -92,8 +92,8 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
   - Player 2: 80% progress bar
 - Bars update dynamically as damage changes
 
-### Wave Summary
-- After each wave, damage data is saved and shown in the shop summary popup
+### Damage Stats
+- After each wave, damage data is saved and shown in the shop damage stats popup
 - Includes total damage, DPS, and ranked top sources for each player
 - Open it via the icon button next to reroll, or enable auto-open in settings
 - In co-op, each player can navigate their own column with their own input device
@@ -130,6 +130,7 @@ For bugs or feature requests, please create an issue on the project repository.
 ## Changelog
 
 ### v1.2.0
+- Fixed a startup parse error in the landmine tracking extension on some mod setups
 - **Configuration System**: Full in-game configuration support with persistence
 - Added Mod Options (dami-ModOptions) as optional dependency for config UI
 - All settings configurable in-game when Mod Options is installed
@@ -138,7 +139,7 @@ For bugs or feature requests, please create an issue on the project repository.
 - Live config updates - changes apply instantly without restarting
 - Custom config file support for advanced users
 - Streamlined settings: removed rarely-used options (compact mode, animation speed, etc.)
-- Added shop wave summary popup with post-wave damage breakdown
+- Added shop damage stats popup with post-wave damage breakdown
 
 ### v1.1.0
 - Added Pocket Factory support

@@ -12,7 +12,7 @@ extends "res://entities/structures/landmine/landmine.gd"
 
 func explode() -> void:
 	# Only intercept pet landmines (spawned by Bot-O-Mine)
-	if not is_pet or dead or effects.size() <= 0:
+	if not _is_pet_landmine() or dead or effects.size() <= 0:
 		.explode()
 		return
 
@@ -32,3 +32,6 @@ func explode() -> void:
 
 	# 5. Restore the original effect (good practice, though the mine dies anyway)
 	effects[0] = original_effect
+
+func _is_pet_landmine() -> bool:
+	return "is_pet" in self and get("is_pet")
