@@ -50,12 +50,11 @@ func _inject_summary_buttons() -> void:
 		var summary_btn = Button.new()
 		summary_btn.name = btn_name
 		summary_btn.text = ""
-		summary_btn.icon = _get_summary_icon()
-		summary_btn.expand_icon = true
 		summary_btn.rect_min_size = Vector2(60, 0)
 		summary_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		summary_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		summary_btn.focus_mode = Control.FOCUS_ALL
+		_add_summary_icon(summary_btn)
 
 		summary_btn.connect("pressed", self, "_on_dmg_summary_pressed")
 
@@ -117,20 +116,58 @@ func _get_summary_icon() -> Texture:
 	if _summary_icon != null:
 		return _summary_icon
 
-	var icon_path := "res://mods-unpacked/Oudstand-DamageMeter/ui/icons/summary_icon.png"
-	var loaded = load(icon_path)
-	if loaded != null:
-		_summary_icon = loaded
-		return _summary_icon
-
-	# Fallback if import data is missing on some setups.
-	var image = Image.new()
-	var err = image.load(icon_path)
-	if err == OK:
-		var tex = ImageTexture.new()
-		tex.create_from_image(image, 0)
-		_summary_icon = tex
-		return _summary_icon
-
-	_summary_icon = load("res://ui/menus/global/gameplay_icon.png")
+	_summary_icon = load("res://ui/icons/misc/weapon_icon.png") # Alternative: res://ui/menus/global/video_icon.png
 	return _summary_icon
+
+func _add_summary_icon(summary_btn: Button) -> void:
+	var icon_rect := TextureRect.new()
+	icon_rect.name = "DamageMeterSummaryIcon"
+	icon_rect.texture = _get_summary_icon()
+	icon_rect.anchor_right = 1.0
+	icon_rect.anchor_bottom = 1.0
+	icon_rect.margin_left = 8.0
+	icon_rect.margin_top = 8.0
+	icon_rect.margin_right = -8.0
+	icon_rect.margin_bottom = -8.0
+	icon_rect.expand = true
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	summary_btn.add_child(icon_rect)
+
+	summary_btn.set_meta("dm_hovered", false)
+	summary_btn.connect("mouse_entered", self, "_on_summary_btn_mouse_entered", [summary_btn])
+	summary_btn.connect("mouse_exited", self, "_on_summary_btn_mouse_exited", [summary_btn])
+	summary_btn.connect("focus_entered", self, "_on_summary_btn_focus_entered", [summary_btn])
+	summary_btn.connect("focus_exited", self, "_on_summary_btn_focus_exited", [summary_btn])
+
+func _on_summary_btn_mouse_entered(summary_btn: Button) -> void:
+	if not is_instance_valid(summary_btn):
+		return
+	summary_btn.set_meta("dm_hovered", true)
+	_update_summary_button_icon(summary_btn)
+
+func _on_summary_btn_mouse_exited(summary_btn: Button) -> void:
+	if not is_instance_valid(summary_btn):
+		return
+	summary_btn.set_meta("dm_hovered", false)
+	_update_summary_button_icon(summary_btn)
+
+func _on_summary_btn_focus_entered(summary_btn: Button) -> void:
+	_update_summary_button_icon(summary_btn)
+
+func _on_summary_btn_focus_exited(summary_btn: Button) -> void:
+	_update_summary_button_icon(summary_btn)
+
+func _update_summary_button_icon(summary_btn: Button) -> void:
+	if not is_instance_valid(summary_btn):
+		return
+
+	var hovered = summary_btn.get_meta("dm_hovered") if summary_btn.has_meta("dm_hovered") else false
+	var icon_rect = summary_btn.get_node_or_null("DamageMeterSummaryIcon")
+	if not is_instance_valid(icon_rect):
+		return
+
+	if summary_btn.has_focus() or hovered:
+		icon_rect.modulate = Color(0.05, 0.05, 0.05, 1.0)
+	else:
+		icon_rect.modulate = Color(1.0, 1.0, 1.0, 1.0)

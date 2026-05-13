@@ -71,7 +71,7 @@ Quickly equip items and weapons during runs! QuickEquip lets you add or remove e
 
 [list]
 [*]Mod Loader Version: 6.2.0+
-[*]Game Version: 1.1.12.0+
+[*]Game Version: 1.1.15.0+ (All Pain No Gain)
 [*]Works with vanilla items and weapons
 [/list]
 

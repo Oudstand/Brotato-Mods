@@ -54,7 +54,7 @@ The mod works perfectly with default settings (shown above). No configuration ne
 
 [list]
 [*]Mod Loader Version: 6.2.0+
-[*]Game Version: 1.1.14.0+ (Paws & Claws)
+[*]Game Version: 1.1.15.0+ (All Pain No Gain)
 [*]Multiplayer: Supports up to 4 players
 [/list]
 

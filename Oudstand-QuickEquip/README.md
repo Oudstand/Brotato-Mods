@@ -120,7 +120,7 @@ The game will automatically use the appropriate language based on your system se
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.12.0+
+- **Game Version**: 1.1.15.0+ (All Pain No Gain)
 - **Dependencies**: Oudstand-ModOptions (required)
 
 ## Known Limitations

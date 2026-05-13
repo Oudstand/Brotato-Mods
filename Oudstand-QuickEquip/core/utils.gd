@@ -58,8 +58,10 @@ static func equip_weapon_on_player(scene_tree, weapon_data: WeaponData, player_i
 		return
 	var main = scene_tree.get_current_scene()
 	if is_instance_valid(main) and "_players" in main:
+		if player_index < 0 or player_index >= main._players.size():
+			return
 		var player = main._players[player_index]
-		if is_instance_valid(player) and player.has_method("add_weapon"):
+		if is_instance_valid(player) and "current_weapons" in player and player.has_method("add_weapon"):
 			var weapon_pos = player.current_weapons.size()
 			player.add_weapon(weapon_data, weapon_pos)
 
@@ -69,6 +71,8 @@ static func remove_weapon_node_at_pos(scene_tree, player_index: int, weapon_pos:
 		return
 	var main = scene_tree.get_current_scene()
 	if not is_instance_valid(main) or not ("_players" in main):
+		return
+	if player_index < 0 or player_index >= main._players.size():
 		return
 	var player = main._players[player_index]
 	if not is_instance_valid(player) or not ("current_weapons" in player):

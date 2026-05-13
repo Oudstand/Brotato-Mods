@@ -228,7 +228,7 @@ See these mods for real-world examples:
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.12.0+
+- **Game Version**: 1.1.15.0+ (All Pain No Gain)
 
 ## Credits
 
@@ -250,7 +250,7 @@ For bugs or feature requests, please create an issue on the project repository.
 - Controller support: Mods tab now fully integrated with bumper/shoulder button navigation
 - Sidebar: Quick navigation between mod settings when multiple mods are installed
 - Performance: Settings injection no longer affects gameplay performance
-- Compatibility: Updated for Paws & Claws
+- Compatibility: Updated for All Pain No Gain
 - _Contributed by L10nM4st3r_
 
 ### v1.0.0

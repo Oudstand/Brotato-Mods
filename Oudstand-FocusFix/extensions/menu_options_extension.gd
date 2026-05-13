@@ -69,7 +69,7 @@ func init() -> void:
 	limit_fps_button.pressed = ProgressData.settings.limit_fps
 
 	mute_on_focus_lost_button.pressed = ProgressData.settings.mute_on_focus_lost
-	pause_on_focus_lost_button.pressed = ProgressData.settings.pause_on_focus_lost
+	on_lost_focus_button.select(ProgressData.settings.on_lost_focus)
 	new_tracks_button.set_pressed_no_signal(ProgressData.settings.streamer_mode_tracks)
 	old_tracks_button.set_pressed_no_signal(ProgressData.settings.legacy_tracks)
 

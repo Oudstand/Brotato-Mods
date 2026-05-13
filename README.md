@@ -38,7 +38,7 @@ DamageMeter displays comprehensive damage statistics during runs, showing total 
 - Configurable via ModOptions
 - Performance optimized
 
-[📖 Read More](Oudstand-DamageMeter/readme.md)
+[📖 Read More](Oudstand-DamageMeter/README.md)
 
 ---
 
@@ -89,7 +89,7 @@ Settings are automatically saved and persist between sessions.
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.12.0+
+- **Game Version**: 1.1.15.0+ (All Pain No Gain)
 - **Multiplayer**: Full support (DamageMeter supports up to 4 players)
 
 ## For Mod Developers
@@ -128,7 +128,7 @@ For bugs, feature requests, or questions:
 - Controller support: Mods tab now fully integrated with bumper/shoulder button navigation
 - Sidebar: Quick navigation between mod settings when multiple mods are installed
 - Performance: Settings injection no longer affects gameplay performance
-- Compatibility: Updated for Paws & Claws
+- Compatibility: Updated for All Pain No Gain
 - _Contributed by L10nM4st3r_
 
 ### ModOptions v1.0.0

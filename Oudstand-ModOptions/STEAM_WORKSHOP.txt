@@ -30,7 +30,7 @@ Want to add configuration to your mod? Check the documentation in the [url=https
 [h2]Compatibility[/h2]
 [list]
 [*]Mod Loader Version: 6.2.0+
-[*]Game Version: 1.1.12.0+
+[*]Game Version: 1.1.15.0+ (All Pain No Gain)
 [*]Works with all properly configured mods
 [/list]
 

@@ -108,7 +108,7 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.12.0
+- **Game Version**: 1.1.15.0+ (All Pain No Gain)
 - **Multiplayer**: Supports up to 4 players
 
 ## Known Issues

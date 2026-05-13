@@ -4,6 +4,7 @@ extends "res://entities/units/enemies/enemy.gd"
 # Much more performant than monitoring all hitboxes - only called when damage is actually dealt
 
 const MOD_NAME: String = "DamageMeter"
+const CHARMED_ENEMIES_DAMAGE_ID: String = "charmed_enemies_damage"
 
 # Cache charm tracker singleton (lazy-loaded on first damage event)
 var _charm_tracker = null
@@ -50,8 +51,11 @@ func take_damage(value: int, args) -> Array:
 	# Check if the attacker is a charmed enemy
 	var charm_info = _get_charm_info_for_node(attacker)
 	if charm_info.is_charmed:
+		if charm_info.player_index < 0 or charm_info.player_index >= RunData.get_player_count():
+			return result
+
 		var damage_taken = result[1]  # result = [full_dmg, actual_dmg, is_dodge]
-		RunData.add_tracked_value(charm_info.player_index, "charmed_enemies_damage", damage_taken)
+		RunData.add_tracked_value(charm_info.player_index, Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID), damage_taken)
 
 	return result
 

@@ -12,6 +12,7 @@ const UPDATE_INTERVAL: float = 0.1
 const ANIMATION_SPEED: float = 6.0
 const MIN_DAMAGE_FILTER: int = 1
 const COMPACT_MODE: bool = false
+const CHARMED_ENEMIES_DAMAGE_ID: String = "charmed_enemies_damage"
 
 # Config values (loaded from ModOptions)
 var TOP_K: int = 6
@@ -152,9 +153,10 @@ func _snapshot_wave_start(player_count: int) -> void:
 		# This ensures the key exists in RunData.tracked_item_effects
 		# It will be filtered by MIN_DAMAGE_FILTER until damage >= 1
 		if charm_tracker.charm_tracking_enabled:
+			var charm_damage_hash = Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID)
 			for i in range(player_count):
 				if RunData.tracked_item_effects.size() > i:
-					RunData.tracked_item_effects[i]["charmed_enemies_damage"] = 0
+					RunData.tracked_item_effects[i][charm_damage_hash] = 0
 
 
 	# Find builder turrets and update their tracking keys
@@ -185,7 +187,7 @@ func _snapshot_wave_start(player_count: int) -> void:
 				RunData.tracked_item_effects[i][key] = 0
 				item_map[key] = 0
 			# For charmed enemies damage, also reset between waves
-			elif item_id_str == "charmed_enemies_damage":
+			elif item_id_str == CHARMED_ENEMIES_DAMAGE_ID:
 				RunData.tracked_item_effects[i][key] = 0
 				item_map[key] = 0
 			else:
@@ -270,7 +272,7 @@ func _get_spawned_items_for_item(item: Object) -> Array:
 
 func _create_virtual_charm_item() -> Dictionary:
 	var charm_item = {
-		"my_id": "charmed_enemies_damage",
+		"my_id": CHARMED_ENEMIES_DAMAGE_ID,
 		"name": "CHARMED_ENEMIES",
 		"tier": Tier.COMMON,
 		"is_cursed": false
@@ -294,7 +296,7 @@ func _is_damage_tracking_item(source) -> bool:
 		return true
 
 	# Special case for charmed enemies (virtual Dictionary item)
-	if "my_id" in source and source.my_id == "charmed_enemies_damage":
+	if "my_id" in source and source.my_id == CHARMED_ENEMIES_DAMAGE_ID:
 		return true
 
 	if not "tracking_text" in source:
@@ -418,7 +420,7 @@ func _build_source_cache(player_index: int) -> Array:
 	# Add virtual item for charmed enemies damage (if tracked)
 	if RunData.tracked_item_effects.size() > player_index:
 		var effects = RunData.tracked_item_effects[player_index]
-		if effects.has("charmed_enemies_damage"):
+		if effects.has(Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID)) or effects.has(CHARMED_ENEMIES_DAMAGE_ID):
 			var charm_item = _create_virtual_charm_item()
 			sources.append(charm_item)
 
