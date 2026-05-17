@@ -23,7 +23,7 @@ var SHOW_PERCENTAGE: bool = true
 var HIDE_TOTAL_BAR_SINGLEPLAYER: bool = false
 var UNGROUP_WEAPONS: bool = false
 
-onready var _hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
+onready var _damage_meter_hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
 
 var _update_accumulator: float = 0.0
 var active_displays: Array = []
@@ -105,7 +105,7 @@ func _ready() -> void:
 
 	for i in range(4):
 		var path = "LifeContainerP%s/PlayerDamageContainerP%s" % [str(i + 1), str(i + 1)]
-		var container = _hud.get_node_or_null(path)
+		var container = _damage_meter_hud.get_node_or_null(path)
 		if is_instance_valid(container):
 			all_display_containers.append(container)
 
