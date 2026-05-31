@@ -3,6 +3,7 @@ extends Node
 # Signal emitted when any option value changes
 # Parameters: mod_id (String), option_id (String), new_value (Variant)
 signal config_changed(mod_id, option_id, new_value)
+signal mod_registered(mod_id)
 
 # Stores registered mod configurations
 # Structure: { "ModName": { "tab_title": "...", "options": [...] } }
@@ -49,6 +50,7 @@ func register_mod_options(mod_id: String, config: Dictionary) -> void:
 	_registered_mods[mod_id] = config
 	_load_config(mod_id)
 	ModLoaderLog.info("ModOptions: Mod '%s' registered successfully" % mod_id, "ModOptions")
+	emit_signal("mod_registered", mod_id)
 
 
 # Get an option value for a specific mod
