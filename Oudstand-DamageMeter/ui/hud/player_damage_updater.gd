@@ -270,6 +270,37 @@ func _get_spawned_items_for_item(item: Object) -> Array:
 
 	return spawned
 
+func _resolve_tracking_key_to_id(key) -> String:
+	if typeof(key) == TYPE_INT and Keys.hash_to_string.has(key):
+		return Keys.hash_to_string[key]
+	if typeof(key) == TYPE_STRING:
+		return key
+	return ""
+
+func _add_tracked_fallback_sources(sources: Array, player_index: int) -> void:
+	if RunData.tracked_item_effects.size() <= player_index:
+		return
+
+	var existing_ids = {}
+	for source in sources:
+		if (is_instance_valid(source) or typeof(source) == TYPE_DICTIONARY) and "my_id" in source:
+			existing_ids[source.my_id] = true
+
+	var effects = RunData.tracked_item_effects[player_index]
+	for key in effects.keys():
+		var item_id = _resolve_tracking_key_to_id(key)
+		if item_id == "" or existing_ids.has(item_id):
+			continue
+
+		var item_hash = Keys.generate_hash(item_id)
+		if not ItemService.is_item_id(item_hash):
+			continue
+
+		var item = ItemService.get_item_from_id(item_hash)
+		if is_instance_valid(item) and _is_damage_tracking_item(item):
+			sources.append(item)
+			existing_ids[item_id] = true
+
 func _create_virtual_charm_item() -> Dictionary:
 	var charm_item = {
 		"my_id": CHARMED_ENEMIES_DAMAGE_ID,
@@ -416,6 +447,11 @@ func _build_source_cache(player_index: int) -> Array:
 
 		for spawned in _get_spawned_items_for_item(item):
 			sources.append(spawned)
+
+	# Some modded entities reuse vanilla tracking keys (for example landmine.gd
+	# based structures). Add known tracked item keys as fallback sources so their
+	# damage can still be displayed even if the player does not own that item.
+	_add_tracked_fallback_sources(sources, player_index)
 
 	# Add virtual item for charmed enemies damage (if tracked)
 	if RunData.tracked_item_effects.size() > player_index:

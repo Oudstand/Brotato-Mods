@@ -5,16 +5,27 @@ extends "res://entities/structures/landmine/landmine.gd"
 # Problem: Bot-O-Mine spawns landmines that use the shared "item_landmines"
 # tracking key, making it impossible to attribute their damage to Bot-O-Mine.
 #
-# Solution: Pet landmines have is_pet = true (set from bot_o_mine_landmines_effect.tres),
-# while regular landmines have is_pet = false. We use this flag to redirect
-# the damage tracking to "item_bot_o_mine" for pet landmines.
+# Solution: Only landmines spawned by the vanilla Bot-O-Mine structure effect
+# are redirected to "item_bot_o_mine". Other pet/modded landmines keep their
+# own tracking key.
+
+const BOT_O_MINE_LANDMINE_EFFECT_PATH := "res://entities/units/pet/bot_o_mine/bot_o_mine_landmines_effect.tres"
+const LANDMINES_ID := "item_landmines"
+
+var _damage_meter_structure_data: Resource = null
+
+
+func set_data(data: Resource) -> void:
+	_damage_meter_structure_data = data
+	.set_data(data)
 
 
 func explode() -> void:
 	var landmine_effects = get("effects")
 
-	# Only intercept pet landmines (spawned by Bot-O-Mine)
-	if not _is_pet_landmine() or _is_dead() or not landmine_effects is Array or landmine_effects.size() <= 0:
+	# Only intercept Bot-O-Mine landmines. Some mods create pet landmines too,
+	# and redirecting all of them would hide their own damage tracking.
+	if not _should_redirect_to_bot_o_mine(landmine_effects) or _is_dead():
 		.explode()
 		return
 
@@ -42,3 +53,18 @@ func _is_pet_landmine() -> bool:
 
 func _is_dead() -> bool:
 	return "dead" in self and get("dead")
+
+func _should_redirect_to_bot_o_mine(landmine_effects) -> bool:
+	if not _is_pet_landmine() or not landmine_effects is Array or landmine_effects.size() <= 0:
+		return false
+
+	var explosion_effect = landmine_effects[0]
+	if not is_instance_valid(explosion_effect):
+		return false
+
+	# Bot-O-Mine landmines reuse the vanilla Landmines tracking key. Modded
+	# landmines with their own tracking key should keep that key untouched.
+	if explosion_effect.get("tracking_key_hash") != Keys.generate_hash(LANDMINES_ID):
+		return false
+
+	return is_instance_valid(_damage_meter_structure_data) and _damage_meter_structure_data.resource_path == BOT_O_MINE_LANDMINE_EFFECT_PATH
