@@ -82,7 +82,6 @@ func init() -> void:
 	color_tier4._init_color(Color(ProgressData.settings.tier_4_color))
 	color_tier5._init_color(Color(ProgressData.settings.tier_5_color))
 
-	_main_screen_keyart_list()
 	var id: int = ProgressData.settings.main_screen_keyart
 	var indx: int = main_screen_keyart.get_item_index(id)
 	main_screen_keyart.select(indx)
