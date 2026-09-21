@@ -42,7 +42,7 @@ _Sidebar navigation for multiple mods_
 
 ### Quick Start
 
-1. Add `Oudstand-ModOptions` as a dependency in your `manifest.json`:
+1. Add `Oudstand-ModOptions` to the `dependencies` array in your existing `manifest.json`. For example (excerpt):
 
 ```json
 {
@@ -53,49 +53,80 @@ _Sidebar navigation for multiple mods_
 }
 ```
 
-2. Register your options in your mod's `_ready()` function:
+2. Use the following Godot 3 example in your `mod_main.gd`. It registers options after `_ready()`, reads saved values at startup, and keeps the mod's variables updated when settings change:
 
 ```gdscript
-func _ready():
-    var ModOptionsAPI = get_node("/root/ModLoader/Oudstand-ModOptions/ModOptionsAPI")
+extends Node
 
-    if ModOptionsAPI:
-        ModOptionsAPI.register_mod_options("YourModID", {
-            "tab_title": "Your Mod Name",
-            "options": [
-                {
-                    "type": "slider",
-                    "id": "damage_multiplier",
-                    "label": "Damage Multiplier",
-                    "min": 0.5,
-                    "max": 2.0,
-                    "step": 0.1,
-                    "default": 1.0
-                },
-                {
-                    "type": "toggle",
-                    "id": "enable_feature",
-                    "label": "Enable Special Feature",
-                    "default": true
-                }
-            ],
-            "info_text": "Configure your mod settings here."
-        })
+const MOD_ID = "YourName-YourMod"
+
+var mod_options = null
+var damage_multiplier = 1.0
+var enable_feature = true
+
+func _ready() -> void:
+    call_deferred("_register_mod_options")
+
+func _register_mod_options() -> void:
+    mod_options = get_node_or_null("/root/ModLoader/Oudstand-ModOptions/ModOptions")
+    if mod_options == null:
+        ModLoaderLog.error("ModOptions manager not found", MOD_ID)
+        return
+
+    mod_options.register_mod_options(MOD_ID, {
+        "tab_title": "Your Mod Name",
+        "options": [
+            {
+                "type": "slider",
+                "id": "damage_multiplier",
+                "label": "Damage Multiplier",
+                "min": 0.5,
+                "max": 2.0,
+                "step": 0.1,
+                "default": 1.0
+            },
+            {
+                "type": "toggle",
+                "id": "enable_feature",
+                "label": "Enable Special Feature",
+                "default": true
+            }
+        ],
+        "info_text": "Configure your mod settings here."
+    })
+
+    # Registration loads saved values, but does not emit config_changed.
+    damage_multiplier = float(mod_options.get_value(MOD_ID, "damage_multiplier"))
+    enable_feature = bool(mod_options.get_value(MOD_ID, "enable_feature"))
+    mod_options.connect("config_changed", self, "_on_config_changed")
+
+func _on_config_changed(mod_id: String, option_id: String, new_value) -> void:
+    if mod_id != MOD_ID:
+        return
+    match option_id:
+        "damage_multiplier":
+            damage_multiplier = float(new_value)
+        "enable_feature":
+            enable_feature = bool(new_value)
 ```
 
-3. Access your settings:
+The manager is a child of the `Oudstand-ModOptions` mod node, not a root autoload. Connect signals directly to `mod_options`; there is no `ModOptionsAPI` child, `config_manager` property, `add_option()` method, or `option_changed` signal in this API. In Godot 3, leave parameters accepting arbitrary values untyped, as with `new_value` above; do not write `new_value: Variant`.
 
-```gdscript
-# Get a value
-var damage = ModOptionsAPI.get_value("YourModID", "damage_multiplier")
+### Persistence and ModLoader Configuration
 
-# Listen for changes
-ModOptionsAPI.config_manager.connect("config_changed", self, "_on_config_changed")
+ModOptions uses its own registration and storage system:
 
-func _on_config_changed(mod_id: String, option_id: String, new_value):
-    if mod_id == "YourModID" and option_id == "damage_multiplier":
-        print("Damage multiplier changed to: ", new_value)
-```
+- `register_mod_options()` initializes defaults and loads existing values from `user://mod_options_<mod_id>.json`.
+- The file is written when an option is changed through the UI or `set_value()`. Registration alone does not create it; a missing file on first launch is normal.
+- Keep your mod ID and option IDs stable so saved settings can be restored.
+- The registration ID is your key within ModOptions, not necessarily the manifest ID. The bundled mods use `DamageMeter` and `QuickEquip`, while their manifest IDs are `Oudstand-DamageMeter` and `Oudstand-QuickEquip`. Use the same registration ID in `get_value()`, `set_value()`, and signal filters. For a new mod, using the full manifest ID as in Quick Start helps avoid collisions; do not rename an existing registration ID without migrating its saved settings.
+- Register each mod ID once. Every option requires `type`, `id`, `label`, and `default`, plus any fields required by its type below.
+
+The ModLoader `extra.godot.config_schema` field and its `configs/<mod_id>/` files belong to a separate configuration system. A schema does not register options in the ModOptions UI, and the two systems do not synchronize automatically. You do not need a `config_schema` if your mod uses only ModOptions. If your mod also uses ModLoader's configuration API, configure that separately.
+
+### Troubleshooting Registration
+
+If your settings do not appear, check that the dependency is installed, the manager lookup succeeds, and `register_mod_options()` runs without validation errors. Check `godot.log` for script errors and `modloader.log` for registration messages. A ModLoader message about a missing config file does not by itself identify why a script failed to load.
 
 ### Supported Option Types
 
@@ -137,6 +168,8 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 }
 ```
 
+Dropdowns store and emit the selected **value from `choices`**, not its index. In the example above, the value is `"Normal"`, not `1`. Set `default` to an element of `choices`. Choices are displayed as strings; there is no separate `enumNames` mapping.
+
 #### Text Input
 
 ```gdscript
@@ -166,42 +199,33 @@ func _on_config_changed(mod_id: String, option_id: String, new_value):
 
 ### API Reference
 
-#### Registration
+The following calls use the `mod_options` manager reference from Quick Start.
+
+| Method | Behavior |
+| --- | --- |
+| `register_mod_options(mod_id, config)` | Registers a unique mod ID, validates the options, and loads defaults and saved values. `config` requires `tab_title` and `options`; `info_text` is optional. |
+| `get_value(mod_id, option_id)` | Returns the saved or default value after registration. Logs an error and returns `null` for an unknown mod or option. |
+| `set_value(mod_id, option_id, value)` | Updates a registered option, attempts to save the settings, and emits `config_changed`. The caller is responsible for providing a suitable value; this method does not enforce option types or ranges. |
+| `get_registered_mods()` | Returns the registered mod IDs. |
+| `get_mod_config(mod_id)` | Returns the registered option definition, or an empty dictionary for an unknown mod. |
+| `get_mod_values(mod_id)` | Returns a shallow copy of the current values, or an empty dictionary for an unknown mod. |
+
+For example, update an option programmatically:
 
 ```gdscript
-ModOptionsAPI.register_mod_options(mod_id: String, config: Dictionary)
+mod_options.set_value(MOD_ID, "damage_multiplier", 1.5)
 ```
-
-- `mod_id`: Unique identifier for your mod
-- `config`: Configuration dictionary with `tab_title`, `options`, and optional `info_text`
-
-#### Getting Values
-
-```gdscript
-ModOptionsAPI.get_value(mod_id: String, option_id: String) -> Variant
-```
-
-Returns the current value of an option, or its default if not set.
-
-#### Setting Values
-
-```gdscript
-ModOptionsAPI.set_value(mod_id: String, option_id: String, value: Variant)
-```
-
-Updates an option value and emits `config_changed` signal.
 
 #### Signals
 
+Connect directly to the manager:
+
 ```gdscript
-config_manager.connect("config_changed", target, method)
+mod_options.connect("config_changed", self, "_on_config_changed")
 ```
 
-Called when any option value changes:
-
-- `mod_id: String` - The mod identifier
-- `option_id: String` - The option identifier
-- `new_value: Variant` - The new value
+- `config_changed(mod_id, option_id, new_value)` is emitted by `set_value()`, including UI changes. It is not emitted when saved settings are initially loaded, so read those using `get_value()` after registration.
+- `mod_registered(mod_id)` is emitted after successful registration and loading of saved values.
 
 ### Translation Support
 
@@ -220,10 +244,14 @@ Then add your translations using `ModLoaderMod.add_translation()` in your mod's 
 
 ## Examples
 
-See these mods for real-world examples:
+The Quick Start follows the same API used by the bundled mods:
 
-- **DamageMeter** - Uses sliders and toggles for display configuration
-- **QuickEquip** - Uses the advanced item_selector type for weapon/item selection
+- [DamageMeter registration](../Oudstand-DamageMeter/mod_main.gd): defers registration from `_ready()`, finds the sibling `Oudstand-ModOptions` node and its `ModOptions` child, then registers sliders and toggles under `DamageMeter`.
+- [DamageMeter HUD settings](../Oudstand-DamageMeter/ui/hud/player_damage_updater.gd): reads current settings with `get_value()` and listens directly to the manager's `config_changed` signal to refresh the HUD.
+- [QuickEquip registration and live updates](../Oudstand-QuickEquip/mod_main.gd): resolves the same manager through `/root/ModLoader`, registers under `QuickEquip`, connects directly to `config_changed`, and filters events by that registration ID. It also guards against duplicate registration and retries a missing manager lookup up to five times.
+- [QuickEquip run initialization](../Oudstand-QuickEquip/extensions/run_data_extension.gd): reads stored values when applying equipment at the start of a run. This complements live updates; saved values do not generate change signals at startup.
+
+Both registration examples use `call_deferred()` from `_ready()`. The single absolute lookup in Quick Start reaches the same manager as their step-by-step lookups. QuickEquip's retries are additional startup handling, not a different API requirement.
 
 ## Compatibility
 
