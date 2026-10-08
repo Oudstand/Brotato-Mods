@@ -111,6 +111,10 @@ This means 5 common turrets are grouped together, but a cursed turret appears se
 - **Game Version**: 1.1.15.0+ (All Pain No Gain)
 - **Multiplayer**: Supports up to 4 players
 
+When used with online multiplayer mods, damage statistics are calculated from
+the local game's weapon and item counters. Different machines may show different
+totals; DamageMeter does not synchronize damage statistics over the network.
+
 ## Known Issues
 
 - Some modded items may not be tracked if they don't use standard damage tracking

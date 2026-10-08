@@ -24,6 +24,8 @@ var HIDE_TOTAL_BAR_SINGLEPLAYER: bool = false
 var UNGROUP_WEAPONS: bool = false
 
 onready var _damage_meter_hud: Control = get_tree().get_current_scene().get_node("UI/HUD")
+# Keep a separate reference from the label's wave_timer, which other mods may clear.
+onready var _damage_meter_wave_timer: Timer = get_tree().get_current_scene().get_node_or_null("WaveTimer")
 
 var _update_accumulator: float = 0.0
 var active_displays: Array = []
@@ -31,6 +33,7 @@ var all_display_containers: Array = []
 var wave_start_item_damages: Dictionary = {}
 var wave_start_time: float = 0.0
 
+var _wave_started: bool = false
 var _wave_finished: bool = false # Tracks if the wave end snapshot has been taken
 
 var _prev_totals: Array = []
@@ -567,11 +570,18 @@ func _exit_tree() -> void:
 		_save_final_data()
 
 func _update_damage_bars() -> void:
-	var wave_active = is_instance_valid(wave_timer) and wave_timer.time_left > 0.0
+	# An unavailable timer is not evidence that the wave has ended.
+	# _exit_tree() still saves on scene exit.
+	if not is_instance_valid(_damage_meter_wave_timer):
+		return
+	var wave_active = _damage_meter_wave_timer.time_left > 0.0
+	if wave_active:
+		_wave_started = true
 	
 	if not wave_active:
-		# Save final wave data exactly once when the wave ends
-		if not _wave_finished:
+		# A timer can be stopped during scene setup. Only finalize after combat
+		# has actually started, so a delayed start cannot freeze an empty summary.
+		if _wave_started and not _wave_finished:
 			_wave_finished = true
 			_save_final_data()
 
