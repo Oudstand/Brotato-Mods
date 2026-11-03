@@ -11,7 +11,9 @@ A comprehensive damage tracking mod for Brotato that displays real-time damage s
 - **Smart Tracking**: Tracks damage from:
   - All weapons
   - Damage-dealing items
-  - Spawned entities (turrets from Wrench, landmines from Screwdriver, turrets from Pocket Factory)
+  - Spawned entities (turrets from Wrench, landmines from Screwdriver, turrets from Pocket Factory, Dart Traps from Awl, Bleeding Turrets from Crowbar)
+  - Pets (e.g. Bonk Dog, Bot-O-Mine)
+  - Charmed enemies (Romantic, Flute, Virus and other charm effects)
   - Character abilities
 - **Visual Indicators**: 
   - Item rarity colors (Common, Uncommon, Rare, Legendary)
@@ -53,8 +55,9 @@ If you have ModOptions installed, configure all settings in-game via **Options â
 - **NUMBER_OF_SOURCES** (1-25): Number of top damage sources to display (default: 6)
 - **SHOW_ITEM_COUNT**: Show count for grouped items (default: true)
 - **SHOW_DPS**: Show damage per second (default: false)
-- **SHOW_PERCENTAGE**: Show percentage values relative to top player (default: true)
+- **SHOW_PERCENTAGE**: Show percentage values relative to top player, co-op only (default: true)
 - **HIDE_DAMAGE_BAR_SOLO**: Hide damage bar when playing solo (default: false)
+- **UNGROUP_WEAPONS**: Show each weapon separately instead of grouping identical weapons (default: false)
 - **SHOW_WAVE_SUMMARY**: Show damage stats button in the shop (default: true)
 - **AUTO_OPEN_WAVE_SUMMARY**: Automatically open damage stats in the shop (default: false)
 
@@ -68,17 +71,19 @@ The mod works perfectly with default settings shown above. No configuration need
 - **Weapons**: Tracked via `dmg_dealt_last_wave` property
 - **Items**: Tracked via `RunData.tracked_item_effects` for items with `DAMAGE_DEALT` tracking
 - **Spawned Entities**: Automatically detects and tracks damage from:
-  - Engineering turrets (Wrench weapon)
+  - Turrets (Wrench weapon)
   - Landmines (Screwdriver weapon)
   - Pocket Factory turrets
+  - Dart Traps (Awl weapon) - the game itself does not record their damage, DamageMeter adds the tracking
+  - Bleeding Turrets (Crowbar weapon)
+- **Charmed Enemies**: Damage dealt by enemies you charmed is shown as one "Charmed enemies" entry
+- **DPS**: Based on the played wave time, so pausing does not lower it
 
 ### Grouping System
-Items are grouped by:
-- Item ID
-- Tier (rarity)
-- Cursed status
+Weapons are grouped by ID, tier (rarity) and cursed status; items by ID and tier.
 
-This means 5 common turrets are grouped together, but a cursed turret appears separately.
+This means 5 common pistols are grouped together, but a cursed pistol appears separately.
+With **UNGROUP_WEAPONS** enabled, every weapon gets its own entry.
 
 ### Performance
 - **Source Caching**: The mod caches which items/weapons a player has and only recalculates damage values
@@ -132,6 +137,19 @@ This mod is provided as-is for the Brotato community. Feel free to modify and sh
 For bugs or feature requests, please create an issue on the project repository.
 
 ## Changelog
+
+### v1.4.0
+- **Primal Dread support**: Charmed enemy damage is now tracked for Virus (evolved charm) and any item granting charm on hit
+- Dart Traps (Awl) and Bleeding Turrets (Crowbar) are listed as their own damage sources, like Wrench turrets
+- Dart Trap damage is now tracked at all: the game ships the Awl and Dart Trap structures without a tracking key
+- Charm detection now uses the game's own lookup; damage bars refresh 4 times per second instead of 10 (less overhead)
+- DPS now counts only played wave time (pauses no longer lower it), and the meter no longer resets the game's own Builder Turret counter
+- Updated for game version 1.2.0.0
+
+### v1.3.0
+- **Bot-O-Mine support**: Landmine damage is now correctly attributed to Bot-O-Mine via a landmine extension
+- **Bonk Dog support**: Explosion and melee damage from Bonk Dog is now tracked and displayed
+- **Ungroup Weapons toggle**: New option to display each weapon individually instead of grouping by tier
 
 ### v1.2.0
 - Fixed a startup parse error in the landmine tracking extension on some mod setups

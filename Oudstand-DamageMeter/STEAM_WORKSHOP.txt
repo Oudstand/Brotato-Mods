@@ -9,7 +9,7 @@ Track your damage in real-time! DamageMeter displays comprehensive damage statis
 [*][b]Top Damage Sources[/b] - See your best weapons, items, and abilities ranked by damage
 [*][b]Wave Summary Screen[/b] - Open a post-wave popup in the shop with full per-player breakdowns (icon button near reroll or auto-open)
 [*][b]Item Grouping[/b] - Automatically groups identical items (e.g., multiple turrets)
-[*][b]Smart Tracking[/b] - Tracks weapons, items, spawned entities (turrets, landmines), and abilities
+[*][b]Smart Tracking[/b] - Tracks weapons, items, spawned entities, pets, charmed enemies and abilities
 [*][b]Visual Indicators[/b] - Rarity colors, cursed markers, item icons with rounded backgrounds
 [*][b]Performance Optimized[/b] - Intelligent caching for smooth gameplay
 [*][b]Fully Configurable[/b] - Customize opacity, number of sources, DPS display, and more
@@ -20,9 +20,13 @@ Track your damage in real-time! DamageMeter displays comprehensive damage statis
 [list]
 [*]All weapons and their damage output
 [*]Damage-dealing items
-[*]Spawned entities (Engineering turrets, Screwdriver landmines, Pocket Factory turrets)
+[*]Spawned entities (Wrench turrets, Screwdriver landmines, Pocket Factory turrets, Awl Dart Traps, Crowbar Bleeding Turrets)
+[*]Pets (e.g. Bonk Dog, Bot-O-Mine)
+[*]Charmed enemies (Romantic, Flute, Virus and other charm effects)
 [*]Character abilities
 [/list]
+
+DPS is based on the played wave time, so pausing does not lower it.
 
 [h2]Configuration[/h2]
 
@@ -34,8 +38,9 @@ If you have ModOptions installed, configure all settings in-game via [b]Options 
 [*][b]Number of Sources[/b] - Show 1-25 top damage sources (default: 6)
 [*][b]Show Item Count[/b] - Display count for grouped items (default: on)
 [*][b]Show DPS[/b] - Display damage per second (default: off)
-[*][b]Show Percentage[/b] - Show percentage values relative to top player (default: on)
+[*][b]Show Percentage[/b] - Show percentage values relative to top player, co-op only (default: on)
 [*][b]Hide Damage Bar (Solo)[/b] - Hide total damage bar when playing solo (default: off)
+[*][b]Ungroup Weapons[/b] - Show each weapon separately instead of grouping identical weapons (default: off)
 [*][b]Show Wave Summary Button[/b] - Show/hide the summary button in the shop (default: on)
 [*][b]Auto Open Wave Summary[/b] - Automatically open summary after each wave (default: off)
 [/list]
