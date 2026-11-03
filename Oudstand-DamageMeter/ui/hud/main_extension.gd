@@ -62,9 +62,6 @@ func _setup_damage_meter_positioning() -> void:
 		if not is_instance_valid(dmg_container):
 			continue
 
-		# Set visibility based on player count
-		dmg_container.visible = (i < player_count)
-
 		# Match HP/XP bar transparency behavior
 		if RunData.is_coop_run:
 			dmg_container.set_base_alpha(0.75)
@@ -97,7 +94,7 @@ func _on_neutral_died(neutral: Neutral, args: Entity.DieArgs) -> void:
 	if not _cleaning_up:
 		for player in _get_shuffled_live_players():
 			var player_index = player.player_index
-			var tree_turrets_count = RunData.get_player_effect(Keys.generate_hash("tree_turrets"), player_index)
+			var tree_turrets_count = RunData.get_player_effect(Keys.tree_turrets_hash, player_index)
 			if tree_turrets_count > 0:
 				_pocket_factory_turret_spawns[player_index] += tree_turrets_count
 

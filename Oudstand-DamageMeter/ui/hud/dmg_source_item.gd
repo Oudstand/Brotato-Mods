@@ -14,6 +14,9 @@ onready var count_label: Label = $Content/IconBackground/CountBadge/CountLabel
 onready var label: Label = $Content/Label
 
 var _is_right: bool = false
+# Background depends only on tier and curse; rebuild it only when those change
+var _bg_tier: int = -1
+var _bg_cursed: bool = false
 
 func _ready() -> void:
 	# Style the count badge with dark semi-transparent background
@@ -70,6 +73,10 @@ func set_data(source_info: Dictionary, show_item_count: bool = true) -> void:
 func _update_background_color(tier: int, is_cursed: bool) -> void:
 	if not is_instance_valid(icon_bg):
 		return
+	if tier == _bg_tier and is_cursed == _bg_cursed:
+		return
+	_bg_tier = tier
+	_bg_cursed = is_cursed
 
 	# Call icon_panel's _update_stylebox to set curse border
 	icon_bg._update_stylebox(is_cursed, tier)
