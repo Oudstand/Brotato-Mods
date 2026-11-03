@@ -22,7 +22,7 @@ func sync_items(weapons_config: Array, items_config: Array, abilities_config: Ar
 	# Get DLC data for curse functionality
 	var dlc_data = null
 	if ProgressData.is_dlc_available_and_active("abyssal_terrors"):
-		dlc_data = ProgressData.get_dlc_data("abyssal_terrors")
+		dlc_data = ItemService.get_dlc_data_by_id("abyssal_terrors")
 
 	# Sync all three types
 	_sync_weapons_config(weapons_config, dlc_data, player_index)
@@ -38,13 +38,9 @@ func sync_items(weapons_config: Array, items_config: Array, abilities_config: Ar
 		return
 
 	# Reset linked stats and recalculate from scratch
+	# (RunData.add_item/remove_item already apply/unapply effects and update item caches)
 	for i in RunData.get_player_count():
 		LinkedStats.reset_player(i)
-
-	# Force RunData to recalculate all effects from items
-	if is_instance_valid(RunData) and RunData.has_method("init_cache_player_effects"):
-		for i in RunData.get_player_count():
-			RunData.init_cache_player_effects(i)
 
 	# Update player stats to apply recalculated bonuses
 	var main = _owner_node.get_tree().get_current_scene()

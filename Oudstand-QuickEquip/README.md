@@ -120,7 +120,7 @@ The game will automatically use the appropriate language based on your system se
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.15.0+ (All Pain No Gain)
+- **Game Version**: 1.2.0.0+ (Primal Dread update)
 - **Dependencies**: Oudstand-ModOptions (required)
 
 ## Known Limitations

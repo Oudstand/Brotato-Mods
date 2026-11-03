@@ -46,13 +46,6 @@ func track_character_ability(character_id: String, ability_resource: CharacterDa
 	applied_character_abilities[player_index][character_id].append(ability_resource)
 
 
-func update_tracking_configs(weapons_config: Array, items_config: Array, abilities_config: Array, player_index: int) -> void:
-	last_weapon_config[player_index] = Utils.deep_copy_config(weapons_config)
-	last_item_config[player_index] = Utils.deep_copy_config(items_config)
-	last_ability_config[player_index] = Utils.deep_copy_config(abilities_config)
-	ModLoaderLog.info("Tracking configs initialized for player %d" % player_index, MOD_ID)
-
-
 func clear_all() -> void:
 	# Clear all tracking data for all players
 	given_weapons.clear()
@@ -62,7 +55,3 @@ func clear_all() -> void:
 	last_item_config.clear()
 	last_ability_config.clear()
 
-
-func has_tracked_items() -> bool:
-	# Check if any player has tracked items
-	return not last_weapon_config.empty() or not last_item_config.empty() or not last_ability_config.empty()
