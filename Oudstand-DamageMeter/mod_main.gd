@@ -2,6 +2,9 @@ extends Node
 
 const MOD_DIR_NAME := "Oudstand-DamageMeter"
 const MOD_ID := "Oudstand-DamageMeter"
+const SHOP_SUMMARY_NODE_NAME := "DamageMeterShopSummary"
+
+var _shop_summary_script: Script
 
 func _init():
 	var mod_dir_path := ModLoaderMod.get_unpacked_dir().plus_file(MOD_DIR_NAME)
@@ -9,10 +12,24 @@ func _init():
 	_load_translations(mod_dir_path)
 	_setup_autoloads(mod_dir_path)
 	_install_extensions(mod_dir_path)
+	_shop_summary_script = load(mod_dir_path.plus_file("ui/summary/shop_summary_button.gd"))
 
 func _ready():
 	# Register options with ModOptions (after it's loaded)
 	call_deferred("_register_mod_options")
+	var _e = get_tree().connect("node_added", self, "_on_node_added")
+
+# The shop gets its summary button from a helper node instead of a
+# base_shop.gd script extension (see shop_summary_button.gd)
+func _on_node_added(node: Node) -> void:
+	if node.get_parent() != get_tree().root or not node.has_method("_get_reroll_button"):
+		return
+	call_deferred("_attach_shop_summary", node)
+
+func _attach_shop_summary(shop: Node) -> void:
+	if not is_instance_valid(shop) or shop.has_node(SHOP_SUMMARY_NODE_NAME):
+		return
+	shop.add_child(_shop_summary_script.new(shop))
 
 func _load_translations(mod_dir_path: String) -> void:
 	var translations_dir := mod_dir_path.plus_file("translations")
@@ -125,7 +142,6 @@ func _install_extensions(mod_dir_path: String) -> void:
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("enemy_extension.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("landmine_extension.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("dart_trap_extension.gd"))
-	ModLoaderMod.install_script_extension(extensions_dir.plus_file("base_shop_extension.gd"))
 
 	var ui_extensions_dir := mod_dir_path.plus_file("ui/hud")
 	ModLoaderMod.install_script_extension(ui_extensions_dir.plus_file("player_damage_updater.gd"))

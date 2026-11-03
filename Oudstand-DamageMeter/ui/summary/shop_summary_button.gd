@@ -1,7 +1,18 @@
-extends "res://ui/menus/shop/base_shop.gd"
+extends Node
 
+# Adds the wave summary button to the shop. mod_main.gd attaches this node to
+# the shop scene at runtime instead of extending base_shop.gd: since game
+# version 1.2.0.1, base_shop.gd can't be loaded while mods are loading (it
+# infers a type from RunData, which isn't loaded yet), which breaks every mod
+# that extends it.
+
+var _shop: Node
 var _dmg_summary_btns: Array = []
 var _summary_icon: Texture = null
+
+func _init(shop: Node) -> void:
+	_shop = shop
+	name = "DamageMeterShopSummary" # Must match mod_main.SHOP_SUMMARY_NODE_NAME
 
 func _ready() -> void:
 	var mod_options = get_node_or_null("/root/ModLoader/Oudstand-ModOptions/ModOptions")
@@ -37,7 +48,7 @@ func _inject_summary_buttons() -> void:
 
 	var player_count = RunData.get_player_count()
 	for i in range(player_count):
-		var reroll_btn = _get_reroll_button(i)
+		var reroll_btn = _shop._get_reroll_button(i)
 		if not is_instance_valid(reroll_btn) or not is_instance_valid(reroll_btn.get_parent()):
 			continue
 
@@ -68,7 +79,7 @@ func _on_dmg_summary_pressed() -> void:
 	var popup_scene = load("res://mods-unpacked/Oudstand-DamageMeter/ui/summary/wave_summary_ui.tscn")
 	if popup_scene:
 		var popup = popup_scene.instance()
-		add_child(popup)
+		_shop.add_child(popup)
 
 func _match_button_height(summary_btn: Control, reference_btn: Control) -> void:
 	if not is_instance_valid(summary_btn) or not is_instance_valid(reference_btn):
@@ -83,7 +94,7 @@ func _wire_summary_focus(summary_btn: Control, reroll_btn: Control, player_index
 	if not is_instance_valid(summary_btn) or not is_instance_valid(reroll_btn):
 		return
 
-	var go_btn = _get_go_button(player_index)
+	var go_btn = _shop._get_go_button(player_index)
 	var old_right = reroll_btn.focus_neighbour_right
 
 	# Link horizontal navigation explicitly so the summary button is reachable
