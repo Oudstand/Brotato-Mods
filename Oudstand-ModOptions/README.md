@@ -10,6 +10,9 @@ A powerful and flexible configuration framework for Brotato mods. ModOptions pro
 - **Live Updates**: Most configuration changes apply immediately without restarting
 - **Persistent Settings**: All settings are automatically saved and restored
 - **User-Friendly**: Clean, consistent interface for all mod settings
+- **Controller Support**: Switch to the Mods tab with the bumper/shoulder buttons and use all options, including dropdowns, with a controller
+- **Sidebar Navigation**: Jump between the settings of different mods when several are installed
+- **Large Screens**: Long dropdowns stay within the visible screen, also on ultrawide or high resolutions
 
 ### For Mod Developers
 
@@ -117,7 +120,7 @@ The manager is a child of the `Oudstand-ModOptions` mod node, not a root autoloa
 ModOptions uses its own registration and storage system:
 
 - `register_mod_options()` initializes defaults and loads existing values from `user://mod_options_<mod_id>.json`.
-- The file is written when an option is changed through the UI or `set_value()`. Registration alone does not create it; a missing file on first launch is normal.
+- The file is written shortly (0.5 s) after an option is changed through the UI or `set_value()`, so a dragged slider is saved once instead of on every step. Pending changes are also written when the game closes. Registration alone does not create the file; a missing file on first launch is normal.
 - Keep your mod ID and option IDs stable so saved settings can be restored.
 - The registration ID is your key within ModOptions, not necessarily the manifest ID. The bundled mods use `DamageMeter` and `QuickEquip`, while their manifest IDs are `Oudstand-DamageMeter` and `Oudstand-QuickEquip`. Use the same registration ID in `get_value()`, `set_value()`, and signal filters. For a new mod, using the full manifest ID as in Quick Start helps avoid collisions; do not rename an existing registration ID without migrating its saved settings.
 - Register each mod ID once. Every option requires `type`, `id`, `label`, and `default`, plus any fields required by its type below.
@@ -205,7 +208,7 @@ The following calls use the `mod_options` manager reference from Quick Start.
 | --- | --- |
 | `register_mod_options(mod_id, config)` | Registers a unique mod ID, validates the options, and loads defaults and saved values. `config` requires `tab_title` and `options`; `info_text` is optional. |
 | `get_value(mod_id, option_id)` | Returns the saved or default value after registration. Logs an error and returns `null` for an unknown mod or option. |
-| `set_value(mod_id, option_id, value)` | Updates a registered option, attempts to save the settings, and emits `config_changed`. The caller is responsible for providing a suitable value; this method does not enforce option types or ranges. |
+| `set_value(mod_id, option_id, value)` | Updates a registered option, schedules saving the settings (written 0.5 s after the last change), and emits `config_changed`. The caller is responsible for providing a suitable value; this method does not enforce option types or ranges. |
 | `get_registered_mods()` | Returns the registered mod IDs. |
 | `get_mod_config(mod_id)` | Returns the registered option definition, or an empty dictionary for an unknown mod. |
 | `get_mod_values(mod_id)` | Returns a shallow copy of the current values, or an empty dictionary for an unknown mod. |
@@ -249,7 +252,7 @@ The Quick Start follows the same API used by the bundled mods:
 - [DamageMeter registration](../Oudstand-DamageMeter/mod_main.gd): defers registration from `_ready()`, finds the sibling `Oudstand-ModOptions` node and its `ModOptions` child, then registers sliders and toggles under `DamageMeter`.
 - [DamageMeter HUD settings](../Oudstand-DamageMeter/ui/hud/player_damage_updater.gd): reads current settings with `get_value()` and listens directly to the manager's `config_changed` signal to refresh the HUD.
 - [QuickEquip registration and live updates](../Oudstand-QuickEquip/mod_main.gd): resolves the same manager through `/root/ModLoader`, registers under `QuickEquip`, connects directly to `config_changed`, and filters events by that registration ID. It also guards against duplicate registration and retries a missing manager lookup up to five times.
-- [QuickEquip run initialization](../Oudstand-QuickEquip/extensions/run_data_extension.gd): reads stored values when applying equipment at the start of a run. This complements live updates; saved values do not generate change signals at startup.
+- [QuickEquip run initialization](../Oudstand-QuickEquip/mod_main.gd): `on_run_started()` (called from its RunData extension) reads stored values with `get_value()` when applying equipment at the start of a run. This complements live updates; saved values do not generate change signals at startup.
 
 Both registration examples use `call_deferred()` from `_ready()`. The single absolute lookup in Quick Start reaches the same manager as their step-by-step lookups. QuickEquip's retries are additional startup handling, not a different API requirement.
 
@@ -280,6 +283,9 @@ For bugs or feature requests, please create an issue on the project repository.
 - Performance: Settings injection no longer affects gameplay performance
 - Compatibility: Updated for All Pain No Gain
 - _Contributed by L10nM4st3r_
+- Long dropdowns (e.g. item selection) now stay within the visible screen when the window is larger than 1080p, so the selected entry no longer scrolls out of view
+- Options menu scene trimmed to the Mods tab button only, for compatibility with Primal Dread
+- Item selector rows build much faster (item lists and scaled icons are cached), and settings are written to disk once after a change instead of on every slider step
 
 ### v1.0.0
 

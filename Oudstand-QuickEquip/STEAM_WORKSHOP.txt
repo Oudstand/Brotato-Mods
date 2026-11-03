@@ -7,6 +7,7 @@ Quickly equip items and weapons during runs! QuickEquip lets you add or remove e
 [list]
 [*][b]Instant Equipment[/b] - Add or remove weapons and items during active runs
 [*][b]Live Updates[/b] - All changes apply immediately without restarting
+[*][b]Automatic Run Start[/b] - Your configured equipment is given at the start of every run, including restarts
 [*][b]Smart Item Selection[/b] - Deduplicated lists with item icons and separate tier dropdowns
 [*][b]Dynamic Tier Selection[/b] - Only shows available tiers for each item
 [*][b]Full Control[/b] - Set quantity and mark items as cursed
@@ -49,6 +50,7 @@ Quickly equip items and weapons during runs! QuickEquip lets you add or remove e
 [list]
 [*]Items with minimum tier requirements (e.g., Anchor requires Tier II, Dex Sweater requires Tier IV) automatically filter unavailable tiers
 [*]If an item only exists in one tier, the tier dropdown is hidden
+[*]Effects the game starts once per wave (e.g. Alien Eyes) only become active from the next wave when added mid-wave; removing them works immediately
 [*]Equipment list is deduplicated - each item appears once with separate tier selection
 [*]Icons make finding items quick and easy
 [/list]

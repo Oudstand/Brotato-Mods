@@ -6,6 +6,7 @@ A convenient mod for Brotato that lets you quickly equip items and weapons durin
 
 - **Instant Equipment**: Add or remove weapons and items during active runs
 - **Live Updates**: All changes apply immediately without restarting
+- **Automatic Run Start**: Your configured equipment is given at the start of every run, including restarts
 - **Smart Item Selection**:
   - Deduplicated dropdown lists with item icons
   - Separate tier selection (I, II, III, IV)
@@ -90,7 +91,7 @@ Install via [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/
 ### Equipment Persistence
 - Your configuration is saved automatically
 - Settings persist between runs and game sessions
-- Start new runs with your configured equipment
+- Configured equipment is given automatically at the start of every run (including restarts)
 - Change configuration anytime - even mid-wave
 
 ## Use Cases
@@ -127,6 +128,7 @@ The game will automatically use the appropriate language based on your system se
 
 - Only works with vanilla items and weapons (modded items depend on mod compatibility)
 - Equipment is not added to the shop or normal loot pools - it's directly equipped
+- Effects the game starts once per wave (e.g. Alien Eyes) only become active from the next wave when added mid-wave; removing them works immediately
 - Borrowed character abilities only include passive/stat effects. Unique hard-coded behaviors (e.g., Renegade shop logic, elite spawn tweaks from Jack/Ogre) still follow your currently selected base character.
 
 ## Credits
@@ -142,6 +144,12 @@ This mod is provided as-is for the Brotato community. Feel free to modify and sh
 For bugs or feature requests, please create an issue on the project repository.
 
 ## Changelog
+
+### v1.1.1
+- Fixed crash when equipping items/weapons: cursed equipment now uses the game's new DLC data lookup
+- Items given at run start now use the same code path as changes during a run (simpler, no retry timer)
+- Removed the projectile effect workaround: the game fixed the underlying bug, and the workaround prevented projectile items (e.g. Alien Eyes) from being removed
+- Updated for game version 1.2.0.0
 
 ### v1.1.0
 - Renamed from AutoGive to QuickEquip (better reflects functionality)
