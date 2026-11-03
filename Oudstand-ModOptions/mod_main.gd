@@ -40,12 +40,6 @@ func _setup_autoloads(mod_dir_path: String) -> void:
 		"ModOptions"
 	)
 
-	# Register the options injector
-	var _options_injector := _create_autoload(
-		mod_dir_path.plus_file("ui/options_injector.gd"),
-		"ModOptionsInjector"
-	)
-
 
 func _create_autoload(script_path: String, node_name: String) -> Node:
 	var instance = load(script_path).new()

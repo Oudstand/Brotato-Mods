@@ -13,9 +13,23 @@ var _registered_mods := {}
 # Structure: { "ModName": { "option_id": value } }
 var _config_values := {}
 
+# Saving is debounced: dragging a slider changes the value every step,
+# but the config file only needs to be written once the user is done.
+const SAVE_DELAY := 0.5
+var _pending_saves := {}
+var _save_timer := Timer.new()
+
 
 func _ready() -> void:
-	pass
+	_save_timer.one_shot = true
+	_save_timer.wait_time = SAVE_DELAY
+	_save_timer.pause_mode = Node.PAUSE_MODE_PROCESS # Options can be changed while the game is paused
+	var _e = _save_timer.connect("timeout", self, "_flush_pending_saves")
+	add_child(_save_timer)
+
+
+func _exit_tree() -> void:
+	_flush_pending_saves()
 
 
 # Register a mod's options configuration
@@ -77,7 +91,8 @@ func set_value(mod_id: String, option_id: String, value) -> void:
 		return
 
 	_config_values[mod_id][option_id] = value
-	_save_config(mod_id)
+	_pending_saves[mod_id] = true
+	_save_timer.start()
 	emit_signal("config_changed", mod_id, option_id, value)
 
 
@@ -168,6 +183,12 @@ func _load_config(mod_id: String) -> void:
 				ModLoaderLog.warning("ModOptions: Failed to parse config for '%s'" % mod_id, "ModOptions")
 		else:
 			ModLoaderLog.warning("ModOptions: Failed to open config file for '%s'" % mod_id, "ModOptions")
+
+
+func _flush_pending_saves() -> void:
+	for mod_id in _pending_saves.keys():
+		_save_config(mod_id)
+	_pending_saves.clear()
 
 
 # Save config to file for a specific mod
