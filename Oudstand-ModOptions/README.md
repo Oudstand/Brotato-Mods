@@ -256,7 +256,7 @@ Both registration examples use `call_deferred()` from `_ready()`. The single abs
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.15.0+ (All Pain No Gain)
+- **Game Version**: 1.2.0.0+ (Primal Dread update)
 
 ## Credits
 

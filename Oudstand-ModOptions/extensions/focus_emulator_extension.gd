@@ -4,9 +4,6 @@ extends "res://ui/menus/global/focus_emulator.gd"
 # 1. PopupMenu scrolling with keyboard/controller in multiplayer coop
 # 2. Focus restoration when controls are deleted dynamically
 
-# Cache for scroll position to avoid reading stale values from ScrollContainer
-var _deferred_scroll_cache = {} # popup -> scroll_position
-
 func _process(_delta: float) -> void:
 	_validate_focus_references()
 
@@ -128,26 +125,8 @@ func _scroll_to_index(popup: PopupMenu, item_index: int) -> void:
 	if item_height <= 1.0:
 		item_height = 64.0
 
+	# The options tab factory keeps the scroll area within the visible screen
 	var viewport_height = scroll_container.rect_size.y
-	
-	# Fix for Fullscreen/Oversized Container:
-	# If the container extends physically below the screen bottom, the bottom items are hidden.
-	# We calculate the "effective" visible height by subtracting the overflow.
-	var scroll_global_rect = scroll_container.get_global_rect()
-	var screen_rect = get_viewport().get_visible_rect()
-	
-	# Check where container ends vs screen ends
-	var container_phys_bottom = scroll_global_rect.position.y + viewport_height
-	var screen_bottom = screen_rect.size.y
-	
-	if container_phys_bottom > screen_bottom:
-		var overflow = container_phys_bottom - screen_bottom
-		# Reduce effective height by overflow + safety margin
-		viewport_height -= (overflow + 32.0)
-		
-		# Safety floor to prevent collapsing logic in weird states
-		if viewport_height < 64.0:
-			viewport_height = 64.0
 
 	# Always read actual scroll from container
 	var current_scroll = scroll_container.scroll_vertical

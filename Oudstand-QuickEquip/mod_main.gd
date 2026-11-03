@@ -8,9 +8,6 @@ var options_registered := false
 var registration_retry_count := 0
 const MAX_REGISTRATION_RETRIES := 5
 
-# Flag to prevent duplicate items in the same run (used by extension)
-var _items_added_this_run := false
-
 # Core modules (no type hints - loaded dynamically in _init)
 var _tracker
 var _sync_manager
@@ -47,22 +44,12 @@ func _load_translations(mod_dir_path: String) -> void:
 func _install_extensions(mod_dir_path: String) -> void:
 	var extensions_dir := mod_dir_path.plus_file("extensions")
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("run_data_extension.gd"))
-	# Fix vanilla division by zero bug when removing projectile items (e.g., Alien Eyes)
-	ModLoaderMod.install_script_extension(extensions_dir.plus_file("projectile_effect_extension.gd"))
 
 
 func _ready():
 	ModLoaderLog.info("QuickEquip Mod ready!", MOD_ID)
 	# Try to register options with a delay to ensure ModOptions is ready
 	call_deferred("_register_mod_options")
-
-
-func _process(_delta):
-	# Reset tracking when returning to menu
-	if is_instance_valid(RunData) and RunData.get_player_count() == 0:
-		if _tracker.has_tracked_items():
-			_clear_all_tracking()
-			ModLoaderLog.info("Back in menu. QuickEquip tracking reset.", MOD_ID)
 
 
 func _get_mod_options() -> Node:
@@ -192,13 +179,6 @@ func _on_config_changed(mod_id: String, option_id: String, new_value) -> void:
 			ModLoaderLog.warning("Could not extract player number from option_id: %s" % option_id, MOD_ID)
 
 
-func _clear_all_tracking() -> void:
-	# Clear all tracking data when returning to menu
-	# Note: We don't remove items here since the run is ending anyway
-	_items_added_this_run = false
-	_tracker.clear_all()
-
-
 func _sync_single_player(player_index: int) -> void:
 	# Sync items for a single player during active run
 	if not is_instance_valid(RunData) or RunData.get_player_count() == 0:
@@ -211,7 +191,11 @@ func _sync_single_player(player_index: int) -> void:
 		if not current_scene or current_scene.name != "Main":
 			return
 
-	# Read configuration from ModOptions
+	_apply_player_config(player_index)
+
+
+# Applies the ModOptions configuration of one player to the current run
+func _apply_player_config(player_index: int) -> void:
 	var mod_options = _get_mod_options()
 	if not mod_options:
 		ModLoaderLog.error("ModOptions not available", MOD_ID)
@@ -242,24 +226,20 @@ func _sync_single_player(player_index: int) -> void:
 		_sync_manager.clear_all_given_items(player_index)
 		return
 
-	# Sync via manager for this player
 	_sync_manager.sync_items(weapons_to_give, items_to_give, abilities_to_apply, player_index)
 
 
 # === Extension Interface ===
-# These methods are called by run_data_extension.gd
+# Called by run_data_extension.gd
 
-func _track_weapon_instance(weapon_id: String, is_cursed: bool, weapon_data: WeaponData, player_index: int) -> void:
-	_tracker.track_weapon_instance(weapon_id, is_cursed, weapon_data, player_index)
-
-
-func _track_item_instance(item_id: String, is_cursed: bool, item_data: ItemData, player_index: int) -> void:
-	_tracker.track_item_instance(item_id, is_cursed, item_data, player_index)
-
-
-func _track_character_ability(character_id: String, ability_resource: CharacterData, player_index: int) -> void:
-	_tracker.track_character_ability(character_id, ability_resource, player_index)
+func on_run_started() -> void:
+	if not options_registered:
+		ModLoaderLog.warning("Options not registered yet, no items given at run start", MOD_ID)
+		return
+	for player_index in range(RunData.get_player_count()):
+		_apply_player_config(player_index)
+	ModLoaderLog.info("Added configured items at run start", MOD_ID)
 
 
-func _update_tracking_configs(weapons_config: Array, items_config: Array, abilities_config: Array, player_index: int) -> void:
-	_tracker.update_tracking_configs(weapons_config, items_config, abilities_config, player_index)
+func clear_tracking() -> void:
+	_tracker.clear_all()

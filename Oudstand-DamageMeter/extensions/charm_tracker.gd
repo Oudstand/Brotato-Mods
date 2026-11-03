@@ -20,15 +20,15 @@ func update_charm_tracking_state() -> void:
 			charm_tracking_enabled = true
 			return
 
-		var weapons = RunData.get_player_weapons(i)
-		for weapon in weapons:
-			if is_instance_valid(weapon) and weapon.weapon_id == "weapon_flute":
+		# Same check the game uses to decide whether enemies can be charmed
+		# (see charm_enemy_effect_behavior.gd). Effects are keyed by hash.
+		# charm_evolved_on_hit comes from Primal Dread (e.g. Virus).
+		if RunData.players_data.size() > i:
+			var effects = RunData.players_data[i].effects
+			if effects[Keys.charm_on_hit_hash].size() > 0 or effects[Keys.charm_evolved_on_hit_hash].size() > 0:
 				charm_tracking_enabled = true
 				return
 
-		if RunData.players_data.size() > i:
-			var player_data = RunData.players_data[i]
-			if "effects" in player_data and "charm_on_hit" in player_data.effects:
-				if player_data.effects["charm_on_hit"].size() > 0:
-					charm_tracking_enabled = true
-					return
+	# Flute and any other weapon carrying a charm effect
+	if RunData.existing_weapon_has_effect(Keys.charm_on_hit_hash):
+		charm_tracking_enabled = true

@@ -124,6 +124,7 @@ func _install_extensions(mod_dir_path: String) -> void:
 	var extensions_dir := mod_dir_path.plus_file("extensions")
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("enemy_extension.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("landmine_extension.gd"))
+	ModLoaderMod.install_script_extension(extensions_dir.plus_file("dart_trap_extension.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir.plus_file("base_shop_extension.gd"))
 
 	var ui_extensions_dir := mod_dir_path.plus_file("ui/hud")

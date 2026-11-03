@@ -2,14 +2,14 @@
 	"name": "FocusFix",
 	"namespace": "Oudstand",
 	"version_number": "1.0.0",
-	"description": "Fixes missing FocusEmulator lookups in non-Steam builds, ensuring the options menu works correctly in coop.",
+	"description": "Prevents script errors in debug/editor runs when opening or closing the options menu during a coop wave (missing FocusEmulator). Local development only.",
 	"website_url": "",
 	"dependencies": [],
 	"optional_dependencies": [],
 	"extra": {
 		"godot": {
 			"authors": ["Oudstand"],
-			"compatible_game_version": ["1.1.12.0"],
+			"compatible_game_version": ["1.2.0.0"],
 			"compatible_mod_loader_version": ["6.2.0"]
 		}
 	}

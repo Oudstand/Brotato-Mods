@@ -9,6 +9,7 @@ const CHARMED_ENEMIES_DAMAGE_ID: String = "charmed_enemies_damage"
 # Cache charm tracker singleton (lazy-loaded on first damage event)
 var _charm_tracker = null
 var _charm_tracker_loaded: bool = false
+var _charmed_damage_hash: int = Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID)
 
 func take_damage(value: int, args) -> Array:
 	# Call original method first to get actual damage dealt
@@ -48,42 +49,15 @@ func take_damage(value: int, args) -> Array:
 	if not is_instance_valid(attacker):
 		return result
 
-	# Check if the attacker is a charmed enemy
-	var charm_info = _get_charm_info_for_node(attacker)
-	if charm_info.is_charmed:
-		if charm_info.player_index < 0 or charm_info.player_index >= RunData.get_player_count():
-			return result
-
-		var damage_taken = result[1]  # result = [full_dmg, actual_dmg, is_dodge]
-		RunData.add_tracked_value(charm_info.player_index, Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID), damage_taken)
-
-	return result
-
-# Returns {is_charmed: bool, player_index: int} for any node
-func _get_charm_info_for_node(node: Node) -> Dictionary:
-	var result = {"is_charmed": false, "player_index": -1}
-
-	if not is_instance_valid(node):
+	# Same lookup the game uses for charmed enemies (enemy.gd)
+	if not attacker is Enemy:
 		return result
 
-	# Look for CharmEnemyEffectBehavior in the node's direct children
-	for child in node.get_children():
-		# Check if it's a CharmEnemyEffectBehavior by looking for unique properties
-		if "charmed" in child and "charmed_by_player_index" in child:
-			if child.charmed:
-				result.is_charmed = true
-				result.player_index = child.charmed_by_player_index
-				return result
+	var player_index: int = attacker.get_charmed_by_player_index()
+	if player_index < 0 or player_index >= RunData.get_player_count():
+		return result
 
-		# CharmEnemyEffectBehavior is inside the EffectBehaviors container
-		# Check if this child is the EffectBehaviors container
-		if child.get_name() == "EffectBehaviors":
-			# Look inside the EffectBehaviors container
-			for effect_behavior in child.get_children():
-				if "charmed" in effect_behavior and "charmed_by_player_index" in effect_behavior:
-					if effect_behavior.charmed:
-						result.is_charmed = true
-						result.player_index = effect_behavior.charmed_by_player_index
-						return result
+	var damage_taken = result[1]  # result = [full_dmg, actual_dmg, is_dodge]
+	RunData.add_tracked_value(player_index, _charmed_damage_hash, damage_taken)
 
 	return result

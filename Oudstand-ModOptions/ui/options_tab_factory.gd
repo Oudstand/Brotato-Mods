@@ -10,6 +10,12 @@ const MENU_BUTTON_SCRIPT := preload("res://ui/menus/global/my_menu_button.gd")
 # Reference to ModOptions manager (set by injector)
 var mod_options: Node = null
 
+# Item lists per item_type, built once per factory (i.e. per options menu).
+# Every item row needs them, and scaling all icons takes ~100 ms per row.
+var _available_items_cache := {}
+var _unique_items_cache := {}
+const ITEM_ICON_SIZE := Vector2(60, 60)
+
 # Track controls with conditional visibility
 # {mod_id: {condition_option_id: [controls that depend on it]}}
 var _visibility_controls := {}
@@ -267,6 +273,7 @@ func _create_dropdown_option(mod_id: String, option: Dictionary) -> Node:
 			selected_index = i
 
 	option_button.selected = selected_index
+	_fit_popup_on_open(option_button)
 
 	# Connect to ModOptions
 	if mod_options:
@@ -435,14 +442,11 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 
 	# Populate dropdown with unique items and icons
 	var selected_item_index = 0
-	var icon_size = Vector2(60, 60) # Fixed icon size for consistency
 
 	for i in range(unique_items.size()):
 		var item = unique_items[i]
 		if item.icon != null:
-			# Scale icon to consistent size
-			var scaled_icon = _scale_icon(item.icon, icon_size)
-			item_dropdown.add_icon_item(scaled_icon, item.display_name, i)
+			item_dropdown.add_icon_item(item.icon, item.display_name, i)
 		else:
 			item_dropdown.add_item(item.display_name, i)
 		if item.base_name == item_data.get("base_name", ""):
@@ -454,6 +458,7 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	var popup = item_dropdown.get_popup()
 	if popup:
 		popup.connect("index_pressed", self, "_on_item_dropdown_index_pressed", [item_dropdown])
+	_fit_popup_on_open(item_dropdown)
 
 	row.add_child(item_dropdown)
 
@@ -484,6 +489,7 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 	var tier_popup = tier_dropdown.get_popup()
 	if tier_popup:
 		tier_popup.connect("index_pressed", self, "_on_tier_dropdown_index_pressed", [tier_dropdown])
+	_fit_popup_on_open(tier_dropdown)
 
 	row.add_child(tier_dropdown)
 
@@ -529,6 +535,9 @@ func _add_item_row(container: VBoxContainer, mod_id: String, option: Dictionary,
 
 # Get all available items or weapons from ItemService
 func _get_available_items(item_type: String) -> Array:
+	if _available_items_cache.has(item_type):
+		return _available_items_cache[item_type]
+
 	var result = []
 
 	if not is_instance_valid(ItemService):
@@ -574,11 +583,15 @@ func _get_available_items(item_type: String) -> Array:
 	# Sort by name
 	result.sort_custom(self, "_sort_items_by_name")
 
+	_available_items_cache[item_type] = result
 	return result
 
 
 # Get unique base items (deduplicated, one per weapon/item type)
 func _get_unique_base_items(item_type: String) -> Array:
+	if _unique_items_cache.has(item_type):
+		return _unique_items_cache[item_type]
+
 	if not is_instance_valid(ItemService):
 		return []
 
@@ -608,10 +621,10 @@ func _get_unique_base_items(item_type: String) -> Array:
 
 		unique_map[base_name] = true
 
-		# Get icon if available
+		# Icon scaled to a consistent size for the dropdown
 		var icon = null
 		if "icon" in item and item.icon != null:
-			icon = item.icon
+			icon = _scale_icon(item.icon, ITEM_ICON_SIZE)
 
 		result.append({
 			"base_name": base_name,
@@ -621,6 +634,7 @@ func _get_unique_base_items(item_type: String) -> Array:
 
 	# Sort by display name
 	result.sort_custom(self, "_sort_base_items_by_name")
+	_unique_items_cache[item_type] = result
 	return result
 
 
@@ -1020,3 +1034,55 @@ func _update_control_visibility(control: Node, mod_id: String, condition_option_
 	var should_be_visible = bool(condition_value)
 
 	control.visible = should_be_visible
+
+
+# Godot sizes a PopupMenu to at least the OS window height, which can exceed the visible
+# (stretched) viewport, e.g. 3440x1440 window vs. 1920x1080 viewport. The popup then extends
+# past the screen and the current item can scroll out of view. The popup itself can't be
+# shrunk below that minimum, so we shrink its inner scroll area to the visible part instead.
+func _fit_popup_on_open(option_button: OptionButton) -> void:
+	var popup = option_button.get_popup()
+	if popup and not popup.is_connected("about_to_show", self, "_on_popup_about_to_show"):
+		popup.connect("about_to_show", self, "_on_popup_about_to_show", [popup])
+
+
+func _on_popup_about_to_show(popup: PopupMenu) -> void:
+	# Deferred: the popup sets its own size and position after this signal
+	call_deferred("_fit_popup_to_screen", popup)
+
+
+func _fit_popup_to_screen(popup: PopupMenu) -> void:
+	if not is_instance_valid(popup) or not popup.visible or popup.get_child_count() == 0:
+		return
+
+	var content_root = popup.get_child(0)  # Internal MarginContainer holding the ScrollContainer
+	if not content_root is Control:
+		return
+
+	var screen := popup.get_viewport().get_visible_rect()
+	var rect := popup.get_global_rect()
+	content_root.margin_top = max(0.0, screen.position.y - rect.position.y)
+	content_root.margin_bottom = -max(0.0, rect.end.y - screen.end.y)
+
+	# Wait for the inner ScrollContainer to adopt the new size, then center the current item
+	yield(popup.get_tree(), "idle_frame")
+	if not is_instance_valid(popup) or not popup.visible:
+		return
+	var scroll_container := _find_scroll_container(popup)
+	var item_count := popup.get_item_count()
+	var index := popup.get_current_index()
+	if scroll_container == null or item_count == 0 or index < 0:
+		return
+	var content = scroll_container.get_child(0)
+	var item_height: float = content.rect_size.y / float(item_count)
+	scroll_container.scroll_vertical = int(index * item_height - (scroll_container.rect_size.y - item_height) / 2.0)
+
+
+func _find_scroll_container(node: Node) -> ScrollContainer:
+	for child in node.get_children():
+		if child is ScrollContainer:
+			return child
+		var found = _find_scroll_container(child)
+		if found:
+			return found
+	return null

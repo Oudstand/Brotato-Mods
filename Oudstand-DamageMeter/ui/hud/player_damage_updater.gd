@@ -8,7 +8,7 @@ extends "res://ui/hud/ui_wave_timer.gd"
 const MOD_NAME: String = "DamageMeter"
 
 # Fixed settings (not configurable via ModOptions)
-const UPDATE_INTERVAL: float = 0.1
+const UPDATE_INTERVAL: float = 0.25
 const ANIMATION_SPEED: float = 6.0
 const MIN_DAMAGE_FILTER: int = 1
 const COMPACT_MODE: bool = false
@@ -126,7 +126,6 @@ func _ready() -> void:
 		return
 	
 	_snapshot_wave_start(player_count)
-	wave_start_time = OS.get_ticks_msec() / 1000.0
 	
 	_prev_totals.resize(player_count)
 	_prev_sigs.resize(player_count)
@@ -152,82 +151,30 @@ func _snapshot_wave_start(player_count: int) -> void:
 	if is_instance_valid(charm_tracker):
 		charm_tracker.update_charm_tracking_state()
 
-		# Initialize charmed_enemies_damage key if charm tracking is enabled
-		# This ensures the key exists in RunData.tracked_item_effects
-		# It will be filtered by MIN_DAMAGE_FILTER until damage >= 1
+		# Make sure the charmed_enemies_damage key exists so the virtual charm source
+		# is listed. Damage is shown relative to the wave start snapshot below.
 		if charm_tracker.charm_tracking_enabled:
 			var charm_damage_hash = Keys.generate_hash(CHARMED_ENEMIES_DAMAGE_ID)
 			for i in range(player_count):
-				if RunData.tracked_item_effects.size() > i:
+				if RunData.tracked_item_effects.size() > i and not RunData.tracked_item_effects[i].has(charm_damage_hash):
 					RunData.tracked_item_effects[i][charm_damage_hash] = 0
-
-
-	# Find builder turrets and update their tracking keys
-	_fix_builder_turret_tracking_keys(player_count)
 
 	for i in range(player_count):
 		if RunData.tracked_item_effects.size() <= i:
 			continue
 
 		var item_map = {}
-		for key in RunData.tracked_item_effects[i].keys():
-			var val = RunData.tracked_item_effects[i].get(key, 0)
-			var current_val = 0
-			if typeof(val) == TYPE_ARRAY:
-				# For pet items with array tracking, snapshot the damage values
-				current_val = _extract_damage_from_array(val, key)
-			else:
-				current_val = int(val)
-			var item_id_str = str(key)
-
-			# Try to resolve hash to string for logic check
-			if key is int and Keys.hash_to_string.has(key):
-				item_id_str = Keys.hash_to_string[key]
-
-			# For builder turret items, the game resets the counter between waves
-			# We reset both the snapshot AND the actual value to ensure sync
-			if item_id_str.begins_with("item_builder_turret_"):
-				RunData.tracked_item_effects[i][key] = 0
+		var effects = RunData.tracked_item_effects[i]
+		for key in effects.keys():
+			# Builder turrets reset their own counter when they spawn, which can happen
+			# after this snapshot, so their wave always starts at 0
+			if _resolve_tracking_key_to_id(key).begins_with("item_builder_turret_"):
 				item_map[key] = 0
-			# For charmed enemies damage, also reset between waves
-			elif item_id_str == CHARMED_ENEMIES_DAMAGE_ID:
-				RunData.tracked_item_effects[i][key] = 0
-				item_map[key] = 0
-			else:
-				item_map[key] = current_val
+				continue
+			var val = effects[key]
+			item_map[key] = _extract_damage_from_array(val, key) if typeof(val) == TYPE_ARRAY else int(val)
 
 		wave_start_item_damages[i] = item_map
-
-func _fix_builder_turret_tracking_keys(_player_count: int) -> void:
-	# Get the main scene to access structures
-	var main = get_tree().get_current_scene()
-	if not is_instance_valid(main):
-		return
-
-	# Try to get EntitySpawner
-	var entity_spawner = main.get_node_or_null("EntitySpawner")
-	if not is_instance_valid(entity_spawner) or not "structures" in entity_spawner:
-		return
-
-	# Iterate through all structures to find builder turrets
-	for structure in entity_spawner.structures:
-		if not is_instance_valid(structure):
-			continue
-
-		# Check if it's a builder turret
-		if not structure.get_script():
-			continue
-
-		var script_path = structure.get_script().resource_path
-		if "builder_turret" in script_path.to_lower():
-			# Found a builder turret!
-			if "player_index" in structure and "_damage_tracking_key" in structure and "_current_level" in structure:
-				var current_level = structure._current_level
-				var expected_key = "item_builder_turret_" + str(current_level)
-
-				# Update the tracking key to match the current level
-				if structure._damage_tracking_key != expected_key:
-					structure._damage_tracking_key = expected_key
 
 func _get_turret_id_for_tier(weapon: Object) -> String:
 	if not is_instance_valid(weapon) or not "tier" in weapon:
@@ -257,8 +204,22 @@ func _get_spawned_items_for_weapon(weapon: Object) -> Array:
 		var landmine = ItemService.get_item_from_id(Keys.generate_hash("item_landmines"))
 		if is_instance_valid(landmine):
 			spawned.append(landmine)
-	
+	elif weapon.name == "WEAPON_AWL":
+		_append_spawned_item(spawned, "item_dart_trap")
+	elif weapon.name == "WEAPON_CROWBAR":
+		_append_spawned_item(spawned, "item_bleeding_turret")
+
 	return spawned
+
+# Primal Dread items are only in ItemService when the DLC is available,
+# and get_item_from_id fails hard on unknown ids.
+func _append_spawned_item(spawned: Array, item_id: String) -> void:
+	var item_hash = Keys.generate_hash(item_id)
+	if not ItemService.is_item_id(item_hash):
+		return
+	var item = ItemService.get_item_from_id(item_hash)
+	if is_instance_valid(item):
+		spawned.append(item)
 
 func _get_spawned_items_for_item(item: Object) -> Array:
 	var spawned = []
@@ -361,7 +322,7 @@ func _get_source_damage(source, player_index: int) -> int:
 	var key = -1
 
 	# Try hash key first (standard Vanilla/Beta behavior)
-	var hash_key = Keys.generate_hash(item_id)
+	var hash_key = source.my_id_hash if "my_id_hash" in source else Keys.generate_hash(item_id)
 	if effects.has(hash_key):
 		key = hash_key
 	# Fallback to string key (for custom tracking like charmed_enemies_damage)
@@ -542,20 +503,10 @@ func _apply_spawned_count_overrides(groups: Dictionary, player_index: int) -> vo
 		var non_pf_sources = max(0, base_count - 1) # subtract Pocket Factory placeholder if present
 		groups[turret_key].count = pf_spawns + non_pf_sources
 
-func _get_top_sources(player_index: int) -> Array:
-	var all_sources = _collect_grouped_sources(player_index)
-	all_sources.sort_custom(self, "_cmp_desc_by_damage")
-
-	var count = min(all_sources.size(), TOP_K)
-	if count == 0:
-		return []
-
-	var result = []
-	result.resize(count)
-	for i in range(count):
-		result[i] = all_sources[i]
-
-	return result
+func _get_sorted_sources(player_index: int) -> Array:
+	var sources = _collect_grouped_sources(player_index)
+	sources.sort_custom(self, "_cmp_desc_by_damage")
+	return sources
 
 func _physics_process(delta: float) -> void:
 	_update_accumulator += delta
@@ -595,13 +546,17 @@ func _update_damage_bars() -> void:
 	totals.resize(player_count)
 	var max_total = 0
 
+	var top_sources_per_player = []
+	top_sources_per_player.resize(player_count)
+
 	for i in range(player_count):
-		var sources = _collect_grouped_sources(i)
+		var sources = _get_sorted_sources(i)
 		var total = 0
 		for group in sources:
 			total += group.damage
-		
+
 		totals[i] = total
+		top_sources_per_player[i] = sources.slice(0, TOP_K - 1) if sources.size() > TOP_K else sources
 		if total > max_total:
 			max_total = total
 
@@ -616,7 +571,7 @@ func _update_damage_bars() -> void:
 		for i in range(player_count):
 			percentages[i] = 0.0
 
-	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
+	var elapsed = _get_wave_elapsed()
 	var dps_values = []
 	dps_values.resize(player_count)
 
@@ -646,7 +601,7 @@ func _update_damage_bars() -> void:
 
 		var total = totals[i]
 		var dps = dps_values[i] if SHOW_DPS else 0
-		var top_sources = _get_top_sources(i)
+		var top_sources = top_sources_per_player[i]
 		var signature = _create_signature(top_sources)
 
 		var total_changed = _prev_totals[i] != total
@@ -673,6 +628,12 @@ func _update_damage_bars() -> void:
 		if total_changed:
 			_prev_totals[i] = total
 
+# Wave time actually played (pauses don't count), with wall clock as fallback
+func _get_wave_elapsed() -> float:
+	if is_instance_valid(_damage_meter_wave_timer) and _damage_meter_wave_timer.wait_time > 0.0:
+		return _damage_meter_wave_timer.wait_time - _damage_meter_wave_timer.time_left
+	return (OS.get_ticks_msec() / 1000.0) - wave_start_time
+
 # Safely read a property from either a Dictionary or an Object
 static func _safe_get_prop(source, key: String, default = null):
 	if typeof(source) == TYPE_DICTIONARY:
@@ -685,11 +646,10 @@ static func _safe_get_prop(source, key: String, default = null):
 func _save_final_data() -> void:
 	var player_count = active_displays.size()
 	var final_data = []
-	var elapsed = (OS.get_ticks_msec() / 1000.0) - wave_start_time
+	var elapsed = _get_wave_elapsed()
 
 	for i in range(player_count):
-		var all_sources = _collect_grouped_sources(i)
-		all_sources.sort_custom(self, "_cmp_desc_by_damage")
+		var all_sources = _get_sorted_sources(i)
 
 		var total = 0
 		var safe_sources = []
