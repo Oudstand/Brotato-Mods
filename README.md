@@ -89,7 +89,7 @@ Settings are automatically saved and persist between sessions.
 ## Compatibility
 
 - **Mod Loader Version**: 6.2.0+
-- **Game Version**: 1.1.15.0+ (All Pain No Gain)
+- **Game Version**: 1.2.0.0+ (Primal Dread update)
 - **Multiplayer**: Full support (DamageMeter supports up to 4 players)
 
 ## For Mod Developers
@@ -123,6 +123,22 @@ For bugs, feature requests, or questions:
 
 ## Changelog
 
+### DamageMeter v1.4.0
+
+- **Primal Dread support**: Charmed enemy damage is now tracked for Virus (evolved charm) and any item granting charm on hit
+- Dart Traps (Awl) and Bleeding Turrets (Crowbar) are listed as their own damage sources, like Wrench turrets
+- Dart Trap damage is now tracked at all: the game ships the Awl and Dart Trap structures without a tracking key
+- Charm detection now uses the game's own lookup; damage bars refresh 4 times per second instead of 10 (less overhead)
+- DPS now counts only played wave time (pauses no longer lower it), and the meter no longer resets the game's own Builder Turret counter
+- Updated for game version 1.2.0.0
+
+### QuickEquip v1.1.1
+
+- Fixed crash when equipping items/weapons: cursed equipment now uses the game's new DLC data lookup
+- Items given at run start now use the same code path as changes during a run (simpler, no retry timer)
+- Removed the projectile effect workaround: the game fixed the underlying bug, and the workaround prevented projectile items (e.g. Alien Eyes) from being removed
+- Updated for game version 1.2.0.0
+
 ### ModOptions v1.1.0
 
 - Controller support: Mods tab now fully integrated with bumper/shoulder button navigation
@@ -130,6 +146,9 @@ For bugs, feature requests, or questions:
 - Performance: Settings injection no longer affects gameplay performance
 - Compatibility: Updated for All Pain No Gain
 - _Contributed by L10nM4st3r_
+- Long dropdowns (e.g. item selection) now stay within the visible screen when the window is larger than 1080p, so the selected entry no longer scrolls out of view
+- Options menu scene trimmed to the Mods tab button only, for compatibility with Primal Dread
+- Item selector rows build much faster (item lists and scaled icons are cached), and settings are written to disk once after a change instead of on every slider step
 
 ### ModOptions v1.0.0
 
