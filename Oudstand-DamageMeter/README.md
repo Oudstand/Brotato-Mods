@@ -138,6 +138,9 @@ For bugs or feature requests, please create an issue on the project repository.
 
 ## Changelog
 
+### v1.4.1
+- **Fixed crash on game version 1.2.0.1**: since this hotfix, mods that extend the shop script (`base_shop.gd`) break the game at startup. The wave summary button is now added to the shop at runtime instead
+
 ### v1.4.0
 - **Primal Dread support**: Charmed enemy damage is now tracked for Virus (evolved charm) and any item granting charm on hit
 - Dart Traps (Awl) and Bleeding Turrets (Crowbar) are listed as their own damage sources, like Wrench turrets
