@@ -30,6 +30,8 @@ func _inject_damage_meters() -> void:
 		var dmg_container = dmg_bar_scene.instance()
 		dmg_container.name = node_name
 		parent_node.add_child(dmg_container)
+		# The meter stretches this container, which would otherwise catch the mouse
+		parent_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 # Hook into the _on_EntitySpawner_players_spawned function
