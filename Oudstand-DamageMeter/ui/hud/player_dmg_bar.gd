@@ -31,6 +31,15 @@ const MAX_SOURCES: int = 25
 
 func _ready() -> void:
 	progress_bar.value = 0.0
+	_ignore_mouse(self)
+
+# The HUD sits above the upgrade screen, and fading out doesn't stop a Control
+# from catching the mouse, so the meter must never take mouse input
+func _ignore_mouse(node: Node) -> void:
+	if node is Control:
+		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_ignore_mouse(child)
 
 func set_animation_settings(animation_speed: float, opacity: float, compact_mode: bool) -> void:
 	_lerp_speed = animation_speed
@@ -128,6 +137,7 @@ func update_source_list(sources: Array, player_index: int, show_item_count: bool
 		else:
 			item = source_item_scene.instance()
 			source_list.add_child(item)
+			_ignore_mouse(item)
 
 		item.visible = true
 		item.set_data(sources[i], show_item_count)
